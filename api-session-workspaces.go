@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
     "strconv"
     "github.com/ant0ine/go-json-rest/rest"
     "github.com/BurntSushi/xgbutil/ewmh"
@@ -18,6 +19,8 @@ type ApiSessionWorkspaces struct {
     CurrentWorkspace uint                   `json:"current"`
     Workspaces       []ApiSessionWorkspace  `json:"workspaces"`
 }
+
+
 
 func (self *SprinklesAPI) GetWorkspaces(w rest.ResponseWriter, r *rest.Request) {
     workspace_count,   _  := ewmh.NumberOfDesktopsGet(self.X)
@@ -49,6 +52,7 @@ func (self *SprinklesAPI) GetWorkspaces(w rest.ResponseWriter, r *rest.Request) 
 }
 
 
+
 func (self *SprinklesAPI) GetCurrentWorkspace(w rest.ResponseWriter, r *rest.Request) {
     current_workspace, _  := ewmh.CurrentDesktopGet(self.X)
     workspace_names, _    := ewmh.DesktopNamesGet(self.X)
@@ -60,6 +64,8 @@ func (self *SprinklesAPI) GetCurrentWorkspace(w rest.ResponseWriter, r *rest.Req
 //  output
     w.WriteJson(&workspace)
 }
+
+
 
 func (self *SprinklesAPI) GetWorkspace(w rest.ResponseWriter, r *rest.Request) {
     workspace_number, _   := strconv.Atoi(r.PathParam("number"))
@@ -78,3 +84,28 @@ func (self *SprinklesAPI) GetWorkspace(w rest.ResponseWriter, r *rest.Request) {
 //  output
     w.WriteJson(&workspace)
 }
+
+
+
+func (self *SprinklesAPI) SetWorkspace(w rest.ResponseWriter, r *rest.Request) {
+    workspace_number, _   := strconv.Atoi(r.PathParam("number"))
+    workspace_count,   _  := ewmh.NumberOfDesktopsGet(self.X)
+
+    if uint(workspace_number) >= workspace_count {
+        w.WriteHeader(400)
+        w.WriteJson(&SprinklesAPIError{
+            Code:    400,
+            Message: fmt.Sprintf("Cannot change to non-existent workspace %d", workspace_number),
+        })
+
+        return
+    }
+
+//  set the current workspace
+    ewmh.CurrentDesktopSet(self.X, uint(workspace_number))
+
+//  show the workspace we just switched to
+    self.GetWorkspace(w, r)
+}
+
+

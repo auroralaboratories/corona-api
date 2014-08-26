@@ -64,6 +64,13 @@ func (self *SprinklesAPI) Init() (err error) {
 
         &rest.Route{"GET", "/v1/session/workspaces/:number",
             self.GetWorkspace },
+
+        &rest.Route{"PUT", "/v1/session/workspaces/:number",
+            self.SetWorkspace },
+
+        &rest.Route{"GET", "/v1/session/windows",
+            self.GetWindows },
+
 	)
 
 	if err != nil {
