@@ -1,0 +1,15 @@
+Start up
+ |
+Start X
+ |
+SLiM
+    -> openbox-session
+      -> ~/.config/openbox/autostart
+         -> xcompmgr -n&
+         -> ~/.sprinkles/start.sh&
+
+~/.sprinkles/start.sh
+   ->/usr/bin/sprinkles-api -c ~/.sprinkles/api/conf/api.conf
+   ->/usr/bin/sprinkels-ui  --pannel --hide -c ~/.sprinkles/conf/pannel.conf
+   ->/usr/bin/sprinkels-ui --hide -c ~/.sprinkles/conf/launcher.conf
+   ->/usr/bin/sprinkels-ui --hide -c ~/.sprinkles/conf/stats.conf
