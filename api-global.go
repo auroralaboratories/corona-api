@@ -5,7 +5,7 @@ import (
 )
 
 type ApiStatus struct {
-	Ok bool
+	Ok bool `json:"ok"`
 }
 
 func (self *SprinklesAPI) GetApiStatus(w rest.ResponseWriter, r *rest.Request) {
