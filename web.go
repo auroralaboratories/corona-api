@@ -3,7 +3,6 @@ package main
 import (
     "fmt"
     "github.com/ant0ine/go-json-rest/rest"
-    "github.com/BurntSushi/xgbutil"
     "net/http"
 )
 
@@ -11,7 +10,7 @@ type SprinklesAPI struct {
     handler   rest.ResourceHandler
     Port      uint
     Interface string
-    X         *xgbutil.XUtil
+    Plugins   map[string]IPlugin
 }
 
 type SprinklesAPIError struct {
@@ -23,12 +22,23 @@ func (self *SprinklesAPI) Throw(err error, code int, w rest.ResponseWriter) {
     rest.Error(w, err.Error(), code)
 }
 
-func (self *SprinklesAPI) Init() (err error) {
-    self.X, err = xgbutil.NewConn()
-    PanicIfErr(err)
+func (self *SprinklesAPI) Plugin(name string) IPlugin {
+    return self.Plugins[name]
+}
 
+func (self *SprinklesAPI) Init() (err error) {
     if self.Port == 0 {
         self.Port = 9521
+    }
+
+    self.Plugins = make(map[string]IPlugin)
+
+    self.Plugins["Session"] = &SessionPlugin{}
+
+    for name, plugin := range self.Plugins {
+        logger.Infof("Initializing plugin: %s", name)
+        err := plugin.Init()
+        PanicIfErr(err)
     }
 
     //  setup CORS middleware
@@ -65,8 +75,8 @@ func (self *SprinklesAPI) Init() (err error) {
         &rest.Route{"GET", "/v1/session/workspaces/:number",
             self.GetWorkspace },
 
-        &rest.Route{"PUT", "/v1/session/workspaces/:number",
-            self.SetWorkspace },
+        // &rest.Route{"PUT", "/v1/session/workspaces/:number",
+        //     self.SetWorkspace },
 
         &rest.Route{"GET", "/v1/session/windows",
             self.GetWindows },
