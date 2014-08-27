@@ -61,7 +61,7 @@ func (self *SprinklesAPI) GetWindows(w rest.ResponseWriter, r *rest.Request) {
         if id == active_window {
             window.Active = true
         }
-        
+
         window_geometry, _      := xgb_window.DecorGeometry()
 
     //  calculate window dimensions from desktop and window frame boundaries

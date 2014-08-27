@@ -1,0 +1,54 @@
+/v1/session/windows          # Windows
+
+  GET /                      # List window ID, name, icon URI, screen and workspace of all open windows
+  GET /current               # Show extensive details about the current window
+  PUT /desktop               # Toggle the desktop
+  PUT /desktop/show          # Explicitly show the desktop
+  PUT /desktop/hide          # Explicitly hide the desktop
+
+  GET /:id                   # Show extensive details about window with ID :id (state, visibility, position, PID, icon URI, etc.)
+  GET /:id/icon?w=&h=        # Get the icon for window :id that is closest in size to ?w x ?h, or the largest available, as type image/png
+  PUT /:id/hide              # Hide window :id
+  PUT /:id/show              # Show window :id (make it visible, but do not raise it)
+  PUT /:id/raise             # Show window :id and make it the active window, raising it to the top of the stack
+  PUT /:id/maximize          # Maximize window :id
+  PUT /:id/minimize          # Minimize window :id
+  PUT /:id/shade             # Shade window :id
+  PUT /:id/unshade           # Unshade window :id
+  PUT /:id/decorate          # Show WM decorations (title bar) for window :id
+  PUT /:id/undecorate        # Hide WM decorations for window :id
+  PUT /:id/resize/:w/:h      # Resize window :id to :w x :h (can be % of current screen)
+  PUT /:id/move/:x/:y        # Move window :id to [:x, :y] (can be % of current screen)
+  PUT /:id/flag/:flag        # Set :flag for window :id (hidden, all desktops, skip taskbar, skip pager, etc.)
+  PUT /:id/unflag/:flag      # Unset :flag for window :id
+  PUT /:id/layer/:layer      # Set stacking layer policy (desktop, below, normal, above)
+  PUT /:id/workspace/:number # Move window :id to workspace :number
+
+
+
+/v1/session/tray             # System tray icons
+
+  GET /                      # List icon, title, other shit about all extant tray icons
+
+
+
+/v1/session/workspaces       # Workspaces
+
+  GET  /                     # Show details on all workspaces (name, number, distinct window count)
+  GET  /current              # Show current workspace
+  PUT  /switch/:number       # Change the current workspace to :number
+  POST /set/:number          # Set the current number of workspaces to :number (min 1)
+  POST /create/:name         # Add a new workspace called :name
+
+
+
+/v1/session/screens          # Screens (X and Xinerama)
+
+  GET /                      # List details of all X screens (geometry, primary?, etc.)
+  GET /outputs               # List details of all XRandR outputs (name, device, etc.)
+
+
+/v1/session/bind             # Key and Mouse bindings, global and per-window
+
+  GET /                      # Show all global keyboard and mouse bindings
+  PUT /                      # Register a new global key or mouse binding
