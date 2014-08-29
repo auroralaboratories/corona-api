@@ -15,8 +15,8 @@ sprinkle [options] APPNAME
 
 * `--hide`:        Hide the window on startup, leaving it up to the application being launched to show it when it is ready.
 * `--layer`:       Which layer of the window stacking order the window should be ordered in (desktop, below, **normal**, above)
-* `-w`/`--width`:  The initial width of the window (in pixels [250] or percent of screen width [75%])
-* `-h`/`--height`: The initial height of the window (in pixels [32] or percent of screen width [5%])
+* `-w`/`--width`:  The initial width of the window, in pixels (_e.g.: 250_) or percent of screen width (_e.g.: 75%_)
+* `-h`/`--height`: The initial height of the window, in pixels (_e.g.: 32_) or percent of screen width (_e.g.: 5%_)
 * `-X`:            The X-coordinate at which the window should be placed initially 
 * `-Y`:            The Y-coordinate at which the window should be placed initially
 * `-D`/`--dock`:   A shortcut for pinning the window to a particular edge of the screen (top, left, bottom, right)
