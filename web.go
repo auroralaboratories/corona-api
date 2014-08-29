@@ -34,6 +34,7 @@ func (self *SprinklesAPI) Init() (err error) {
     self.Plugins = make(map[string]IPlugin)
 
     self.Plugins["Session"] = &SessionPlugin{}
+    self.Plugins["Config"]  = &ConfigPlugin{}
 
     for name, plugin := range self.Plugins {
         logger.Infof("Initializing plugin: %s", name)
