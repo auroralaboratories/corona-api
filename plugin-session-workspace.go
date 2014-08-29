@@ -28,10 +28,14 @@ func (self *SessionPlugin) GetWorkspace(workspace_number uint) (workspace Sessio
 
     workspace.Number       = workspace_number
     
+//  set workspace name if one is given
+//  TODO: what does this array look like if only a few workspaces have names, but not all?
+//        might get a nil assign error
     if int(workspace_number) < len(workspace_names) {
         workspace.Name         = workspace_names[workspace_number]
     }
 
+//  flag which workspace is the active one 
     if workspace_number == current_workspace {
         workspace.IsCurrent = true
     }

@@ -10,6 +10,6 @@ SLiM
 
 ~/.sprinkles/start.sh
    ->/usr/bin/sprinkles-api -c ~/.sprinkles/api/conf/api.conf
-   ->/usr/bin/sprinkels-ui  --pannel --hide -c ~/.sprinkles/conf/pannel.conf
-   ->/usr/bin/sprinkels-ui --hide -c ~/.sprinkles/conf/launcher.conf
-   ->/usr/bin/sprinkels-ui --hide -c ~/.sprinkles/conf/stats.conf
+   ->/usr/bin/sprinkle  --panel --hide -c ~/.sprinkles/conf/panel.conf
+   ->/usr/bin/sprinkle --hide -c ~/.sprinkles/conf/launcher.conf
+   ->/usr/bin/sprinkle --hide -c ~/.sprinkles/conf/stats.conf
