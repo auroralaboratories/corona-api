@@ -1,0 +1,8 @@
+/v1/config                         # Generic document storage
+
+  GET /                            # Show info on document database
+  GET /collections                 # List all collections and stats about them
+  GET /:collection/:id             # Get document :id from :collection
+  GET /list/:collection/:property  # List the distinct values of :property from all documents in :collection
+
+  POST /:collection/:id            # Create or update document :id in :collection (create :collection if necessary)
