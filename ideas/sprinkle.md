@@ -27,7 +27,7 @@ sprinkle [options] APP
 
 ### `APP`
 
-The `APP` argument is mandatory and tells `sprinkle` which page it should load.  If an absolute path is specified (that is, a path that starts with a _/_), then `sprinkle` will attempt to load the file at that path.  If the absolute path is a directory, it will attempt to load the file `index.html` in that directory.  Otherwise, the value of `APP` is treated as an _application name_, and a series of directories will be searched to locate the application, with the first existing path being loaded.  The directories that are searched can be overridden by setting the `SPRINKLE_PATH` environment variable.  The default search path is:
+The `APP` argument is mandatory and tells `sprinkle` which page it should load.  If an absolute path is specified (that is, a path that starts with a _/_ ), then `sprinkle` will attempt to load the file at that path.  If the absolute path is a directory, it will attempt to load the file `index.html` in that directory.  Otherwise, the value of `APP` is treated as an _application name_, and a series of directories will be searched to locate the application, with the first existing path being loaded.  The directories that are searched can be overridden by setting the `SPRINKLE_PATH` environment variable.  The default search path is:
 
 * _~/.sprinkles/apps_
 * _/usr/share/sprinkles/apps_
