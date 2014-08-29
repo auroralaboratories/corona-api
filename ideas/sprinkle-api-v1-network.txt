@@ -1,1 +1,4 @@
-init
+/v1/network
+  GET /              # get network manager status [running, state, wifihardware, wifi, wwan-hardware, wwan]
+  GET /connections   # list connections           [name, uuid, type, timestamp]
+  GET /devices       # list devices               [device, type, state]
