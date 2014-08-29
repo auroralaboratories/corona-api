@@ -10,11 +10,3 @@ func (self *SprinklesAPI) GetWindows(w rest.ResponseWriter, r *rest.Request) {
 //  output
     w.WriteJson(&windows)
 }
-
-
-func (self *SprinklesAPI) GetWindow(w rest.ResponseWriter, r *rest.Request) {
-    window, _ := self.Plugin("Session").(*SessionPlugin).GetWindow(r.PathParam("id"))
-
-//  output
-    w.WriteJson(&window)
-}

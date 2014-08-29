@@ -2,8 +2,10 @@ package main
 
 import (
     "strconv"
+    "io"
     "github.com/BurntSushi/xgb/xproto"
     "github.com/BurntSushi/xgbutil/xwindow"
+    "github.com/BurntSushi/xgbutil/xgraphics"
     "github.com/BurntSushi/xgbutil/ewmh"
 )
 
@@ -27,7 +29,7 @@ type SessionWindow struct {
     Roles         []string                    `json:"roles,omitempty"`
     Flags         []string                    `json:"flags,omitempty"`
     IconUri       string                      `json:"icon,omitempty"`
-    Workspace     uint                        `json:"workspace,omitempty"`
+    Workspace     uint                        `json:"workspace"`
     AllWorkspaces bool                        `json:"all_workspaces,omitempty"`
     Screen        uint                        `json:"screen,omitempty"`
     Dimensions    SessionWindowGeometry       `json:"dimensions"`
@@ -54,10 +56,10 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
     window_workspace, _     := ewmh.WmDesktopGet(self.X, id)
     active_window, _        := ewmh.ActiveWindowGet(self.X)
 
+    window.Workspace         = window_workspace
+    
     if window_workspace == 0xFFFFFFFF {
         window.AllWorkspaces = true
-    }else{
-        window.Workspace = window_workspace
     }
 
     if id == active_window {
@@ -76,6 +78,20 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
 
     window.Process = process
 
+    return
+}
+
+
+func (self *SessionPlugin) WriteWindowIcon(window_id string, width int, height int, w io.Writer) (err error) {
+    id_number, _            := strconv.Atoi(window_id)
+    id                      := xproto.Window(uint32(id_number))
+    icon, err               := xgraphics.FindIcon(self.X, id, width, height)
+
+    if err != nil {
+        return
+    }
+
+    err = icon.WritePng(w)
     return
 }
 
