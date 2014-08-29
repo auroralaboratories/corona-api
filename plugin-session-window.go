@@ -56,10 +56,11 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
     window_workspace, _     := ewmh.WmDesktopGet(self.X, id)
     active_window, _        := ewmh.ActiveWindowGet(self.X)
 
-    window.Workspace         = window_workspace
     
     if window_workspace == 0xFFFFFFFF {
         window.AllWorkspaces = true
+    }else{
+        window.Workspace     = window_workspace
     }
 
     if id == active_window {
@@ -82,10 +83,10 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
 }
 
 
-func (self *SessionPlugin) WriteWindowIcon(window_id string, width int, height int, w io.Writer) (err error) {
+func (self *SessionPlugin) WriteWindowIcon(window_id string, width uint, height uint, w io.Writer) (err error) {
     id_number, _            := strconv.Atoi(window_id)
     id                      := xproto.Window(uint32(id_number))
-    icon, err               := xgraphics.FindIcon(self.X, id, width, height)
+    icon, err               := xgraphics.FindIcon(self.X, id, int(width), int(height))
 
     if err != nil {
         return
@@ -108,4 +109,19 @@ func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
     }
 
     return windows, nil
+}
+
+
+func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
+    id_number, _            := strconv.Atoi(window_id)
+    id                      := xproto.Window(uint32(id_number))
+    err                      = ewmh.ActiveWindowSet(self.X, id)
+    
+    if err != nil {
+        return
+    }
+
+    err                      = ewmh.RestackWindow(self.X, id)
+
+    return
 }

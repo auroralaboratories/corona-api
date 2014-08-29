@@ -87,6 +87,8 @@ func (self *SprinklesAPI) Init() (err error) {
         &rest.Route{"GET", "/v1/session/windows/:id/icon",
             self.GetWindowIcon },
 
+        &rest.Route{"PUT", "/v1/session/windows/:id/raise",
+            self.RaiseWindow },
     )
 
     if err != nil {
