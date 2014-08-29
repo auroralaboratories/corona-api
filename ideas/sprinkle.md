@@ -22,4 +22,4 @@ sprinkle [options] APPNAME
 | `-X`            | The X-coordinate at which the window should be placed initially                                                            |
 | `-Y`            | The Y-coordinate at which the window should be placed initially                                                            |
 | `-D`/`--dock`   | A shortcut for pinning the window to a particular edge of the screen (top, left, bottom, right)                            |
-| `-R`/`--reserve`| Have the sprinkle window reserve its dimensions with the window manager so that other windows won't maximize over it.      |
+| `-R`/`--reserve`| Have this window reserve its dimensions so that other windows won't maximize over it.                                      |
