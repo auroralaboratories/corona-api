@@ -22,6 +22,7 @@ sprinkle [options] APP
 | `-X`            | The X-coordinate at which the window should be placed initially                                                            |
 | `-Y`            | The Y-coordinate at which the window should be placed initially                                                            |
 | `-D / --dock`   | A shortcut for pinning the window to a particular edge of the screen (top, left, bottom, right)                            |
+| `-A / --align`  | A shortcut for aligning the window within the axis the window is docked to (start, middle, end)                            |
 | `-R / --reserve`| Have this window reserve its dimensions so that other windows won't maximize over it.                                      |
 
 
