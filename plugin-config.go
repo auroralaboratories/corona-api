@@ -10,7 +10,7 @@ type ConfigPlugin struct {
 }
 
 func (self *ConfigPlugin) Init() (err error) {
-    self.Connection, err = db.OpenDB(self.GetConfigOr("config.db.path", "/tmp/sprinkles.db").(string))
+    self.Connection, err = db.OpenDB(self.GetConfigOr("config.db.path", "/tmp/sprinkles").(string))
     return
 }
 

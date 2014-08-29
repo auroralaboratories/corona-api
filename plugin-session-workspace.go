@@ -27,7 +27,10 @@ func (self *SessionPlugin) GetWorkspace(workspace_number uint) (workspace Sessio
     }
 
     workspace.Number       = workspace_number
-    workspace.Name         = workspace_names[workspace_number]
+    
+    if workspace_number < len(workspace_names) {
+        workspace.Name         = workspace_names[workspace_number]
+    }
 
     if workspace_number == current_workspace {
         workspace.IsCurrent = true
