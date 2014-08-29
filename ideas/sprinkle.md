@@ -16,7 +16,7 @@ sprinkle [options] APP
 | Option Name         | Description                                                                                                                |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `--hide`            | Hide the window on startup, leaving it up to the application being launched to show it when it is ready.                   |
-| `--[no-]skip-panel` | Do not show the window's icon in the system panel
+| `--show-in-panel`   | Show the window's icon in the system panel                                                                                 |
 | `-L / --layer`      | Which layer of the window stacking order the window should be ordered in (desktop, below, **normal**, above)               |
 | `-w / --width`      | The initial width of the window, in pixels (_e.g.: 250_) or percent of screen width (_e.g.: 75%_)                          |
 | `-h / --height`     | The initial height of the window, in pixels (_e.g.: 32_) or percent of screen height (_e.g.: 5%_)                          |
