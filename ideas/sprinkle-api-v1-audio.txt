@@ -1,1 +1,5 @@
-init
+/v1/audio         # 
+  GET /vol        # Returns current default output device volume.
+  PUT /vol        # Set current default device output volume, 0-65535
+  GET /volup/:val # vol up by 'val' (0-65535)
+  GET /voldn/:val # vol down by 'val' (0-65535)
