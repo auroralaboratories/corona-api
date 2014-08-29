@@ -13,7 +13,8 @@ sprinkle [options] APPNAME
 
 ### `[options]`
 
-|- Option ------- | - Description ------------------------------------------------------------------------------------------------------------ |
+| Option          | Description                                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `--hide`        | Hide the window on startup, leaving it up to the application being launched to show it when it is ready.                   |
 | `-L`/`--layer`  | Which layer of the window stacking order the window should be ordered in (desktop, below, **normal**, above)               |
 | `-w`/`--width`  | The initial width of the window, in pixels (_e.g.: 250_) or percent of screen width (_e.g.: 75%_)                          |
