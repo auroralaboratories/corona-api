@@ -1,5 +1,23 @@
-/v1/audio         # 
-  GET /vol        # Returns current default output device volume.
-  PUT /vol        # Set current default device output volume, 0-65535
-  GET /volup/:val # vol up by 'val' (0-65535)
-  GET /voldn/:val # vol down by 'val' (0-65535)
+/v1/audio                         # 
+  GET /vol                        # Returns current default output device volume.
+  PUT /vol                        # Set current default device output volume, 0-65535
+  GET /volup/:val                 # vol up by 'val' (0-65535)
+  GET /voldn/:val                 # vol down by 'val' (0-65535)
+  
+  GET /outputs                    # Get a list of all audio output devices (e.g.: Pulseaudio sinks)
+  GET /outputs/default            # Get the currently configured default output device
+  PUT /outputs/default/:id        # Set the default output device to :id, which corresponds to the :id field of the 'GET /outputs' list
+  GET /outputs/:id                # Show details about a specific output device
+  PUT /outputs/:id/vol/:percent   # Set device volume to :percent of maximum
+  PUT /outputs/:id/volup/:percent # Raise the device volume by :percent (?force=true to exceed 100%)
+  PUT /outputs/:id/voldn/:percent # Lower the device volume by :percent (min 0)
+  PUT /outputs/:id/mute           # Mute the device
+  PUT /outputs/:id/unmute         # Unmute the device
+  
+  GET /clients                    # (if applicable, else HTTP 501) Show a list of applications that are currently using audio resources (e.g. Pulseaudio sources)
+  GET /clients/:id                # Show details about a specific audio application
+  PUT /clients/:id/vol/:percent   # Set application volume to :percent of maximum
+  PUT /clients/:id/volup/:percent # Raise the application volume by :percent (?force=true to exceed 100%)
+  PUT /clients/:id/voldn/:percent # Lower the application volume by :percent (min 0)
+  PUT /clients/:id/mute           # Mute the application
+  PUT /clients/:id/unmute         # Unmute the application
