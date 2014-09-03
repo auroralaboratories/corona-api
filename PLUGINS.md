@@ -24,3 +24,14 @@ Controllers must do the following things:
 * Perform discrete operations that represent logical API endpoints
 * Output structured data via `go-json-rest`'s _WriteJson()_ writer method, or errors via the _rest.Error()_ method.
   * Very occasionally, other types of data will be returned, but the convention is to try to represent state via JSON as much as possible.
+  * 
+
+
+## Routes
+
+Routes are the actual URL paths that map to your controllers.  At present, they are defined in `web.go`'s _Init()_ method.
+
+
+# See Also
+
+* https://godoc.org/github.com/ant0ine/go-json-rest/rest
