@@ -17,7 +17,7 @@ Models must do the following things:
 
 ## Controllers
 
-Controllers are relatively thin, almost boilerplate, methods that are called by the REST routing engine.  These methods are implemented on `SprinklesAPI` and are responsible for calling the plugin's model implementations, using data passed in via POST data, query strings, or other per-call and environmental factors.
+Controllers are relatively thin, almost boilerplate, methods that are called by the REST routing engine.  By convention, these are in files prefixed with "`api-`" (e.g.: `api-session-workspaces.go`).  These methods are implemented on `SprinklesAPI` and are responsible for calling the plugin's model implementations, using data passed in via POST data, query strings, or other per-call and environmental factors.
 
 Controllers must do the following things:
 
