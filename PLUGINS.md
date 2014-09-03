@@ -1,7 +1,7 @@
 # Plugin Development Primer
 
 
-Plugins are built in two phases; one for implementation of functionality (think of these as models), and one for doing the necessary work to return a useful REST response (e.g.: controllers).
+Plugins are built in two phases; one for implementation of functionality (think of these as models), and one for doing the necessary work to return a useful REST response (i.e.: controllers).
 
 ## Models
 
