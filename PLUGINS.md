@@ -10,7 +10,7 @@ Models are where the functional implementation of the tasks a plugin performs ar
 Models must do the following things:
 
 * Implement the `IPlugin` inteface
-* * Define an _Init()_ method to perform necessary setup/connection
+  * Define an _Init()_ method to perform necessary setup/connection
 * Mix-in the `BasePlugin` struct
 * Instantiate the plugin instance in the `SprinklesAPI.Plugins` map (in `web.go`'s _Init()_ method)
 
@@ -23,4 +23,4 @@ Controllers must do the following things:
 
 * Perform discrete operations that represent logical API endpoints
 * Output structured data via `go-json-rest`'s _WriteJson()_ writer method, or errors via the _rest.Error()_ method.
-* * Very occasionally, other types of data will be returned, but the convention is to try to represent state via JSON as much as possible.
+  * Very occasionally, other types of data will be returned, but the convention is to try to represent state via JSON as much as possible.
