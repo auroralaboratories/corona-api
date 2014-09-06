@@ -1,6 +1,6 @@
 # Message Bus Plugin
 
-The message bus plugin provides a WebSocket API endpoint that allows clients to asynchronously send and receive arbitrary events from other clients, or from the API itself (via other plugins)
+The message bus plugin provides a WebSocket API endpoint (`/v1/bus`) that allows clients to asynchronously send and receive arbitrary events from other clients, or from the API itself (via other plugins)
 
 ## Overview
 
@@ -68,3 +68,9 @@ The table below illustrates how this works:
 | `["test", "other"]`               | `["other", "other2"]`                | No                         | No                       |
 | `["test", "other"]`               | `[]`                                 | No                         | **Yes**                  |
 
+
+## Sample Client
+
+TODO: make this simpler, but for now:
+
+* <https://github.com/ghetzel/sprinkles-ui/blob/master/apps/panel-tint2/panel.js>
