@@ -25,6 +25,9 @@ type BusConnection struct {
 //  a unique id used to identify this connection
     ID         string
 
+//  whether this connection will receive async messages
+    Active     bool
+
 //  The websocket connection.
     Connection *websocket.Conn
 
@@ -33,6 +36,9 @@ type BusConnection struct {
 
 //  Buffered channel of outbound messages.
     SendBuffer chan *BusMessage
+
+//  arbitrary set of tags that a client can register interest in
+    FilterTags      []string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -61,9 +67,6 @@ func (self *BusConnection) Reader() {
 }
 
 func (self *BusConnection) PrepareMessage(message *BusMessage) (*BusMessage) {
-//  inject connection id
-    message.ConnectionID = self.ID
-
 //  inject timestamp
     message.Timestamp = time.Now()
 
@@ -71,7 +74,7 @@ func (self *BusConnection) PrepareMessage(message *BusMessage) (*BusMessage) {
 }
 
 // write writes a message with the given message type and payload.
-func (self *BusConnection) Write(payload *BusMessage) error {
+func (self *BusConnection) Write(payload *BusMessage) (err error) {
     self.Connection.SetWriteDeadline(time.Now().Add(writeWait))
     return self.Connection.WriteJSON(self.PrepareMessage(payload))
 }
