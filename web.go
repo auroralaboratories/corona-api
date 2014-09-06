@@ -7,15 +7,24 @@ import (
 )
 
 type SprinklesAPI struct {
-    handler   rest.ResourceHandler
-    Port      uint
-    Interface string
-    Plugins   map[string]IPlugin
+    RestHandler rest.ResourceHandler
+    HttpHandler http.Handler
+    Port        uint
+    Interface   string
+    Plugins     map[string]IPlugin
 }
 
 type SprinklesAPIError struct {
     Code    int
     Message string
+}
+
+func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    if _, ok := r.Header["Upgrade"]; ok {
+        self.HttpHandler.ServeHTTP(w, r)
+    } else {
+        self.RestHandler.ServeHTTP(w, r)
+    }
 }
 
 func (self *SprinklesAPI) Throw(err error, code int, w rest.ResponseWriter) {
@@ -35,6 +44,7 @@ func (self *SprinklesAPI) Init() (err error) {
 
     self.Plugins["Session"] = &SessionPlugin{}
     self.Plugins["Config"]  = &ConfigPlugin{}
+    self.Plugins["Bus"]     = &BusPlugin{}
 
     for name, plugin := range self.Plugins {
         logger.Infof("Initializing plugin: %s", name)
@@ -42,8 +52,14 @@ func (self *SprinklesAPI) Init() (err error) {
         PanicIfErr(err)
     }
 
-    //  setup CORS middleware
-    self.handler = rest.ResourceHandler{
+//  initialize non-rest HTTP handlers
+    mux := http.NewServeMux()
+    mux.HandleFunc("/ws", self.WebsocketClientConnect)
+    self.HttpHandler = mux
+
+
+//  setup CORS middleware
+    self.RestHandler = rest.ResourceHandler{
         PreRoutingMiddlewares: []rest.Middleware{
             &rest.CorsMiddleware{
                 RejectNonCorsRequests: false,
@@ -60,7 +76,7 @@ func (self *SprinklesAPI) Init() (err error) {
     }
 
     //  setup routes
-    err = self.handler.SetRoutes(
+    err = self.RestHandler.SetRoutes(
         &rest.Route{"GET", "/",
             self.GetApiStatus },
 
@@ -88,6 +104,9 @@ func (self *SprinklesAPI) Init() (err error) {
         &rest.Route{"GET", "/v1/session/windows/:id/icon",
             self.GetWindowIcon },
 
+        &rest.Route{"GET", "/v1/session/windows/:id/image",
+            self.GetWindowImage },
+
         &rest.Route{"PUT", "/v1/session/windows/:id/raise",
             self.RaiseWindow },
     )
@@ -100,6 +119,6 @@ func (self *SprinklesAPI) Init() (err error) {
 }
 
 func (self *SprinklesAPI) Serve() error {
-    err := http.ListenAndServe(fmt.Sprintf("%s:%d", self.Interface, self.Port), &self.handler)
+    err := http.ListenAndServe(fmt.Sprintf("%s:%d", self.Interface, self.Port), self)
     return err
 }

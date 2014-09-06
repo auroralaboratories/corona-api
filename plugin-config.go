@@ -1,16 +1,20 @@
 package main
 
 import (
-    "github.com/HouzuoGuo/tiedot/db"
+    "code.google.com/p/leveldb-go/leveldb"
+    "code.google.com/p/leveldb-go/leveldb/db"
 )
 
 type ConfigPlugin struct {
     BasePlugin
-    Connection *db.DB
+
+    ConnectOptions *db.Options
+    Connection     *leveldb.DB
 }
 
 func (self *ConfigPlugin) Init() (err error) {
-    conn, err := db.OpenDB(self.GetConfigOr("plugins.config.db.path", "/tmp/sprinkles").(string))
+    self.ConnectOptions = &db.Options{}
+    conn, err := leveldb.Open(self.GetConfigOr("plugins.config.db.path", "/tmp/sprinkles").(string), self.ConnectOptions)
 
     if err != nil {
       return
@@ -20,3 +24,7 @@ func (self *ConfigPlugin) Init() (err error) {
     return
 }
 
+
+// func (self *ConfigPlugin) GetKey(namespace string, key string, fallback interface{}) (err error) {
+//     //self.Connection.Get()
+// }

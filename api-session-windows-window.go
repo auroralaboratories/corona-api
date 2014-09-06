@@ -43,6 +43,21 @@ func (self *SprinklesAPI) GetWindowIcon(w rest.ResponseWriter, r *rest.Request) 
     }
 }
 
+
+func (self *SprinklesAPI) GetWindowImage(w rest.ResponseWriter, r *rest.Request) {
+    var buffer bytes.Buffer
+
+    err := self.Plugin("Session").(*SessionPlugin).WriteWindowImage(r.PathParam("id"), &buffer)
+
+    if err != nil {
+      rest.Error(w, err.Error(), 400)
+    }else{
+      w.Header().Set("Content-Type", "image/png")
+      w.(http.ResponseWriter).Write(buffer.Bytes())
+    }
+}
+
+
 func (self *SprinklesAPI) RaiseWindow(w rest.ResponseWriter, r *rest.Request) {
   err := self.Plugin("Session").(*SessionPlugin).RaiseWindow(r.PathParam("id"))
 

@@ -45,10 +45,6 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
     window                   = SessionWindow{}
     process                 := SessionProcess{}
 
-    if err != nil {
-        return window, err
-    }
-
 
     window.ID                = uint32(id)
     window.Title, _          = ewmh.WmNameGet(self.X, id)
@@ -56,7 +52,7 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
     window_workspace, _     := ewmh.WmDesktopGet(self.X, id)
     active_window, _        := ewmh.ActiveWindowGet(self.X)
 
-    
+
     if window_workspace == 0xFFFFFFFF {
         window.AllWorkspaces = true
     }else{
@@ -97,6 +93,25 @@ func (self *SessionPlugin) WriteWindowIcon(window_id string, width uint, height 
 }
 
 
+func (self *SessionPlugin) WriteWindowImage(window_id string, w io.Writer) (err error) {
+    id_number, _            := strconv.Atoi(window_id)
+    id                      := xproto.Window(uint32(id_number))
+    drawable                := xproto.Drawable(id)
+    image, err              := xgraphics.NewDrawable(self.X, drawable)
+
+    if err != nil {
+        return
+    }
+
+    image.XSurfaceSet(id)
+    image.XDraw()
+
+
+    err = image.WritePng(w)
+    return
+}
+
+
 func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
     clients, _          := ewmh.ClientListGet(self.X)
 
@@ -116,7 +131,7 @@ func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
     id_number, _            := strconv.Atoi(window_id)
     id                      := xproto.Window(uint32(id_number))
     err                      = ewmh.ActiveWindowSet(self.X, id)
-    
+
     if err != nil {
         return
     }
