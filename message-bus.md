@@ -55,15 +55,15 @@ By convention, the vast majority of events on the message bus will have one or m
 
 The table below illustrates how this works:
 
-| Client Filter Tags                | Inbound Message Tags                 | Message Has `"global"` field set? | Client Receives Message  |
-| --------------------------------- | ------------------------------------ | --------------------------------- | ------------------------ |
-| `[]`                              | `[]`                                 | No                                | **Yes**                  |
-| `[]`                              | `[]`                                 | Yes                               | **Yes**                  |
-| `[]`                              | `["test"]`                           | No                                | **Yes**                  |
-| `["test"]`                        | `["test"]`                           | No                                | **Yes**                  |
-| `["test"]`                        | `["other"]`                          | No                                | No                       |
-| `["test"]`                        | `["other"]`                          | Yes                               | **Yes**                  |
-| `["test", "other"]`               | `["other"]`                          | No                                | **Yes**                  |
-| `["test", "other"]`               | `["other", "other2"]`                | No                                | No                       |
-| `["test", "other"]`               | `[]`                                 | No                                | **Yes**                  |
+| Client Filter Tags                | Inbound Message Tags                 | Message Has the "global" field set? | Client Receives Message  |
+| --------------------------------- | ------------------------------------ | ----------------------------------- | ------------------------ |
+| `[]`                              | `[]`                                 | No                                  | **Yes**                  |
+| `[]`                              | `[]`                                 | Yes                                 | **Yes**                  |
+| `[]`                              | `["test"]`                           | No                                  | **Yes**                  |
+| `["test"]`                        | `["test"]`                           | No                                  | **Yes**                  |
+| `["test"]`                        | `["other"]`                          | No                                  | No                       |
+| `["test"]`                        | `["other"]`                          | Yes                                 | **Yes**                  |
+| `["test", "other"]`               | `["other"]`                          | No                                  | **Yes**                  |
+| `["test", "other"]`               | `["other", "other2"]`                | No                                  | No                       |
+| `["test", "other"]`               | `[]`                                 | No                                  | **Yes**                  |
 
