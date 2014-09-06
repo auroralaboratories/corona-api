@@ -54,7 +54,7 @@ func (self *SprinklesAPI) Init() (err error) {
 
 //  initialize non-rest HTTP handlers
     mux := http.NewServeMux()
-    mux.HandleFunc("/ws", self.WebsocketClientConnect)
+    mux.HandleFunc("/v1/bus", self.WebsocketClientConnect)
     self.HttpHandler = mux
 
 
