@@ -4,6 +4,10 @@
 
 package main
 
+import (
+    "time"
+)
+
 type BusPlugin struct {
     BasePlugin
 
@@ -27,9 +31,10 @@ const (
 )
 
 type BusMessage struct {
-    ConnectionID        string `json:"id,omitempty"`
-    Type                string `json:"type"`
-    Message             string `json:"message,omitempty"`
+    ConnectionID        string     `json:"id,omitempty"`
+    Timestamp           time.Time  `json:"timestamp,omitempty"`
+    Type                string     `json:"type"`
+    Message             string     `json:"message,omitempty"`
 }
 
 func (self *BusPlugin) Init() (err error) {

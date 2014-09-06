@@ -60,14 +60,24 @@ func (self *BusConnection) Reader() {
     }
 }
 
+func (self *BusConnection) PrepareMessage(message *BusMessage) (*BusMessage) {
+//  inject connection id
+    message.ConnectionID = self.ID
+
+//  inject timestamp
+    message.Timestamp = time.Now()
+
+    return message
+}
+
 // write writes a message with the given message type and payload.
 func (self *BusConnection) Write(payload *BusMessage) error {
     self.Connection.SetWriteDeadline(time.Now().Add(writeWait))
-    return self.Connection.WriteJSON(payload)
+    return self.Connection.WriteJSON(self.PrepareMessage(payload))
 }
 
 func (self *BusConnection) Control(mt int, payload *BusMessage) (err error) {
-    out, err := json.Marshal(payload)
+    out, err := json.Marshal(self.PrepareMessage(payload))
 
     if err != nil {
         logger.Errorf("Unable to send control message: %s", err)
@@ -96,8 +106,6 @@ func (self *BusConnection) Writer() {
                 })
                 return
             }
-
-            message.ConnectionID = self.ID
 
             if err := self.Write(message); err != nil {
                 return
