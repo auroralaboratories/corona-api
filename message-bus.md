@@ -64,6 +64,7 @@ The table below illustrates how this works:
 | `["test"]`                        | `["other"]`                          | No                                  | No                       |
 | `["test"]`                        | `["other"]`                          | Yes                                 | **Yes**                  |
 | `["test", "other"]`               | `["other"]`                          | No                                  | **Yes**                  |
+| `["test", "other"]`               | `["test", "other"]`                  | No                                  | **Yes**                  |
 | `["test", "other"]`               | `["other", "other2"]`                | No                                  | No                       |
 | `["test", "other"]`               | `[]`                                 | No                                  | **Yes**                  |
 
