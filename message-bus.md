@@ -18,20 +18,31 @@ The message bus is designed to facilitate creating highly interactive client app
 
 ## Control Messages
 
-Clients can issue special messages called _Control Messages_ that will not be broadcast on the bus, but rather are used to modify the client's connection on the server.  Control messages can be used to get statistics about the connection, temporarily disable receiving messages, and select only certain messages.
+Clients can issue special messages called _Control Messages_ that will not be broadcast on the bus, but rather are used to modify the client's connection on the server.  Control messages can be used to get statistics about the connection, temporarily disable receiving messages, and select only certain messages.  All control messages require the `"type"`, `"id"` and `"verb"` fields in the request.
 
-The payload of a Control Message looks like this:
+### Example 2: Sample Control Message and Reply
 
+##### Request:
 ```json
 {
-  "id":   "aaaa1234-bbbb-cccc-dddd-123456789012",
   "type": "control",
+  "id":   "aaaa1234-bbbb-cccc-dddd-123456789012",
   "verb": "activate"
 }
 
 ```
 
-This would receive a response with a type of either `"succeeded"` or `"failed"`, and optionally a `"message"` with more details.
+##### Reply:
+```json
+{
+  "timestamp": "1970-01-01T18:35:21.561321636-04:00",
+  "type":      "succeeded",
+  "message":   "Connection has been activated and will receive all messages destined for it"
+}
+
+```
+
+Replies will have a type of either `"succeeded"` or `"failed"`, and optionally a `"message"` with more details.
 
 
 ## Tag Filters
