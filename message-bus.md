@@ -49,7 +49,7 @@ Replies will have a type of either `"succeeded"` or `"failed"`, and optionally a
 
 By convention, the vast majority of events on the message bus will have one or more _tags_ associated with them.  Your client can register _filters_ with the server to select only a subset of messages that you are interested in.  The following rules describe how tags will behave.
 
-* If the client's has _not_ set any filter tags, it will receive all messages.
+* If the client has _not_ set any filter tags, it will receive all messages.
 * If the client has set filter tags, it will only receive messages whose tags are a subset of the client's filter.
 * If the `"global"` field is `true` on a message, the client will receive that message regardless of filter status.
 
@@ -57,13 +57,13 @@ The table below illustrates how this works:
 
 | Client Filter Tags                | Inbound Message Tags                 | Message Has `"global"` field set? | Client Receives Message  |
 | --------------------------------- | ------------------------------------ | --------------------------------- | ------------------------ |
-| []                                | []                                   | No                                | **Yes**                  |
-| []                                | []                                   | Yes                               | **Yes**                  |
-| []                                | ["test"]                             | No                                | **Yes**                  |
-| ["test"]                          | ["test"]                             | No                                | **Yes**                  |
-| ["test"]                          | ["other"]                            | No                                | No                       |
-| ["test"]                          | ["other"]                            | Yes                               | **Yes**                  |
-| ["test", "other"]                 | ["other"]                            | No                                | **Yes**                  |
-| ["test", "other"]                 | ["other", "other2"]                  | No                                | No                       |
-| ["test", "other"]                 | []                                   | No                                | **Yes**                  |
+| `[]`                              | `[]`                                 | No                                | **Yes**                  |
+| `[]`                              | `[]`                                 | Yes                               | **Yes**                  |
+| `[]`                              | `["test"]`                           | No                                | **Yes**                  |
+| `["test"]`                        | `["test"]`                           | No                                | **Yes**                  |
+| `["test"]`                        | `["other"]`                          | No                                | No                       |
+| `["test"]`                        | `["other"]`                          | Yes                               | **Yes**                  |
+| `["test", "other"]`               | `["other"]`                          | No                                | **Yes**                  |
+| `["test", "other"]`               | `["other", "other2"]`                | No                                | No                       |
+| `["test", "other"]`               | `[]`                                 | No                                | **Yes**                  |
 
