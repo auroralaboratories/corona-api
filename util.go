@@ -9,3 +9,13 @@ func contains(set []string, value string) bool {
 
     return false
 }
+
+func indexOf(set []string, value string) int {
+    for idx, i := range set {
+      if i == value {
+        return idx
+      }
+    }
+
+    return -1
+}

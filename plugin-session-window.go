@@ -137,6 +137,15 @@ func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
     }
 
     err                      = ewmh.RestackWindow(self.X, id)
-
     return
+}
+
+
+func (self *SessionPlugin) removeState(id xproto.Window, state string){
+    states, _               := ewmh.WmStateGet(self.X, id)
+
+    if i := indexOf(states, state); i >= 0 {
+        states = append(states[:i], states[i+1:]...)
+        ewmh.WmStateSet(self.X, id, states)
+    }
 }
