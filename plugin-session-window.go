@@ -9,6 +9,7 @@ import (
     "github.com/BurntSushi/xgbutil/ewmh"
 )
 
+
 type SessionProcess struct {
     PID      uint                           `json:"pid"`
     Command  string                         `json:"command"`
@@ -27,7 +28,7 @@ type SessionWindow struct {
     ID            uint32                      `json:"id"`
     Title         string                      `json:"name"`
     Roles         []string                    `json:"roles,omitempty"`
-    Flags         []string                    `json:"flags,omitempty"`
+    Flags         map[string]bool             `json:"flags,omitempty"`
     IconUri       string                      `json:"icon,omitempty"`
     Workspace     uint                        `json:"workspace"`
     AllWorkspaces bool                        `json:"all_workspaces,omitempty"`
@@ -74,6 +75,64 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
     process.PID, _           = ewmh.WmPidGet(self.X, id)
 
     window.Process = process
+
+//  get window state flags
+    window.Flags = make(map[string]bool)
+
+//  minimized
+    if self.hasState(id, "_NET_WM_STATE_HIDDEN") {
+        window.Flags["minimized"] = true
+    }
+
+//  shaded
+    if self.hasState(id, "_NET_WM_STATE_SHADED") {
+        window.Flags["shaded"] = true
+    }
+
+//  maximized
+    if self.hasState(id, "_NET_WM_STATE_MAXIMIZED_VERT") && self.hasState(id, "_NET_WM_STATE_MAXIMIZED_HORZ") {
+        window.Flags["maximized"] = true
+    }
+
+//  above
+    if self.hasState(id, "_NET_WM_STATE_ABOVE") {
+        window.Flags["above"] = true
+    }
+
+//  below
+    if self.hasState(id, "_NET_WM_STATE_BELOW") {
+        window.Flags["below"] = true
+    }
+
+//  urgent
+    if self.hasState(id, "_NET_WM_STATE_DEMANDS_ATTENTION") {
+        window.Flags["urgent"] = true
+    }
+
+//  skip_taskbar
+    if self.hasState(id, "_NET_WM_STATE_SKIP_TASKBAR") {
+        window.Flags["skip_taskbar"] = true
+    }
+
+//  skip_pager
+    if self.hasState(id, "_NET_WM_STATE_SKIP_PAGER") {
+        window.Flags["skip_pager"] = true
+    }
+
+//  sticky
+    if self.hasState(id, "_NET_WM_STATE_STICKY") {
+        window.Flags["sticky"] = true
+    }
+
+//  fullscreen
+    if self.hasState(id, "_NET_WM_STATE_FULLSCREEN") {
+        window.Flags["fullscreen"] = true
+    }
+
+//  modal
+    if self.hasState(id, "_NET_WM_STATE_MODAL") {
+        window.Flags["modal"] = true
+    }
 
     return
 }
@@ -130,22 +189,51 @@ func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
 func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
     id_number, _            := strconv.Atoi(window_id)
     id                      := xproto.Window(uint32(id_number))
-    err                      = ewmh.ActiveWindowSet(self.X, id)
-
-    if err != nil {
+    
+    if err = ewmh.ActiveWindowSet(self.X, id); err != nil {
         return
     }
 
-    err                      = ewmh.RestackWindow(self.X, id)
+    if err = self.removeState(id, "_NET_WM_STATE_HIDDEN"); err != nil {
+        return
+    }
+
+    if err = ewmh.RestackWindow(self.X, id); err != nil {
+        return
+    }
+
     return
 }
 
 
-func (self *SessionPlugin) removeState(id xproto.Window, state string){
+func (self *SessionPlugin) hasState(id xproto.Window, state string) (bool){
     states, _               := ewmh.WmStateGet(self.X, id)
+
+    if indexOf(states, state) >= 0 {
+        return true
+    }
+
+    return false
+}
+
+func (self *SessionPlugin) addState(id xproto.Window, state string) (err error){
+    states, _               := ewmh.WmStateGet(self.X, id)    
+
+    if !self.hasState(id, state) {
+        states = append(states, state)
+        err = ewmh.WmStateSet(self.X, id, states)
+    }
+
+    return
+}
+
+func (self *SessionPlugin) removeState(id xproto.Window, state string) (err error){
+    states, _               := ewmh.WmStateGet(self.X, id)    
 
     if i := indexOf(states, state); i >= 0 {
         states = append(states[:i], states[i+1:]...)
-        ewmh.WmStateSet(self.X, id, states)
+        err = ewmh.WmStateSet(self.X, id, states)
     }
+
+    return
 }
