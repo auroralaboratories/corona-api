@@ -3,15 +3,18 @@ package main
 import (
     "fmt"
     "os"
+    "io"
+    "io/ioutil"
     "path"
     "strings"
     "github.com/ant0ine/go-json-rest/rest"
-    "github.com/russross/blackfriday"
+    "github.com/shurcooL/go/github_flavored_markdown"
     "net/http"
 )
 
 type SprinklesOptions struct {
-    StaticRoot  string
+    StaticRoot          string
+    NoMarkdownAutoparse bool
 }
 
 type SprinklesAPI struct {
@@ -36,24 +39,28 @@ func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     } else {
     //  paths that start with '/static' route to the file server
         if strings.HasPrefix(r.URL.Path, "/static") {
-        //  paths ending in '.md' are markdown and returned as HTML
-            if strings.HasSuffix(r.URL.Path, ".md") {
-            //  open target file
-                mdpath := path.Join(self.Options.StaticRoot, strings.TrimPrefix(r.URL.Path, "/static"))
-                file, err := os.Open(mdpath)
+        //  allow user to get raw source with the ?raw=true query string
+            raw := (r.URL.Query().Get("raw") == "true")
 
-                if err != nil {
-                    w.WriteHeader(500)
+            if !self.Options.NoMarkdownAutoparse && !raw {
+            //  paths ending in '.md' are markdown and returned as HTML
+                if strings.HasSuffix(r.URL.Path, ".md") {
+                //  open target file
+                    mdpath := path.Join(self.Options.StaticRoot, strings.TrimPrefix(r.URL.Path, "/static"))
+                    buffer, err := ioutil.ReadFile(mdpath)
+
+                    if err != nil {
+                        w.WriteHeader(500)
+                        return
+                    }
+
+                    parsed := github_flavored_markdown.Markdown(buffer)
+                    w.Header().Set("Content-Type", "text/html")
+                    io.WriteString(w, `<html><head><meta charset="utf-8"><style>code, div.highlight { tab-size: 4; }</style><link href="https://github.com/assets/github.css" media="all" rel="stylesheet" type="text/css" /></head><body><article class="markdown-body entry-content" style="padding: 30px;">`)
+                    w.Write(parsed)
+                    io.WriteString(w, `</article></body></html>`)
                     return
                 }
-
-                buffer := make([]byte, 1048576)
-                file.Read(buffer)
-                parsed := blackfriday.MarkdownCommon(buffer)
-
-                w.Header().Set("Content-Type", "text/html")
-                w.Write(parsed)
-                return
             }
 
             self.FileHandler.ServeHTTP(w, r)

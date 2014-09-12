@@ -10,3 +10,4 @@ github.com/BurntSushi/xgbutil
 github.com/ghetzel/go-logger
 github.com/gorilla/websocket
 github.com/russross/blackfriday
+github.com/shurcooL/go/github_flavored_markdown
