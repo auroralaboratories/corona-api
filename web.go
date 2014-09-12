@@ -3,8 +3,10 @@ package main
 import (
     "fmt"
     "os"
+    "path"
     "strings"
     "github.com/ant0ine/go-json-rest/rest"
+    "github.com/russross/blackfriday"
     "net/http"
 )
 
@@ -28,12 +30,35 @@ type SprinklesAPIError struct {
 }
 
 func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+//  handle websocket HTTP connection upgrade
     if _, ok := r.Header["Upgrade"]; ok {
         self.HttpHandler.ServeHTTP(w, r)
     } else {
+    //  paths that start with '/static' route to the file server
         if strings.HasPrefix(r.URL.Path, "/static") {
-            logger.Infof("DIR %s", r.URL.Path)
+        //  paths ending in '.md' are markdown and returned as HTML
+            if strings.HasSuffix(r.URL.Path, ".md") {
+            //  open target file
+                mdpath := path.Join(self.Options.StaticRoot, strings.TrimPrefix(r.URL.Path, "/static"))
+                file, err := os.Open(mdpath)
+
+                if err != nil {
+                    w.WriteHeader(500)
+                    return
+                }
+
+                buffer := make([]byte, 1048576)
+                file.Read(buffer)
+                parsed := blackfriday.MarkdownCommon(buffer)
+
+                w.Header().Set("Content-Type", "text/html")
+                w.Write(parsed)
+                return
+            }
+
             self.FileHandler.ServeHTTP(w, r)
+
+    //  all other paths are treated as REST calls
         }else{
             self.RestHandler.ServeHTTP(w, r)
         }
