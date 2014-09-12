@@ -14,7 +14,7 @@ type ConfigPlugin struct {
 
 func (self *ConfigPlugin) Init() (err error) {
     self.ConnectOptions = &db.Options{}
-    conn, err := leveldb.Open(self.GetConfigOr("plugins.config.db.path", "/tmp/sprinkles").(string), self.ConnectOptions)
+    conn, err := leveldb.Open(self.GetConfigOr("plugins.config.db.path", "/tmp/corona").(string), self.ConnectOptions)
 
     if err != nil {
       return

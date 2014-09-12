@@ -14,7 +14,7 @@ var websocketUpgrader = websocket.Upgrader{
     },
 }
 
-func (self *SprinklesAPI) WebsocketClientConnect(w http.ResponseWriter, r *http.Request){
+func (self *CoronaAPI) WebsocketClientConnect(w http.ResponseWriter, r *http.Request){
     bus := self.Plugin("Bus").(*BusPlugin)
     ws, err := websocketUpgrader.Upgrade(w, r, nil)
 

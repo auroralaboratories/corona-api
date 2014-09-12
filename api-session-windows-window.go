@@ -9,7 +9,7 @@ import (
 )
 
 
-func (self *SprinklesAPI) GetWindow(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetWindow(w rest.ResponseWriter, r *rest.Request) {
     window, _ := self.Plugin("Session").(*SessionPlugin).GetWindow(r.PathParam("id"))
 
     window.IconUri = fmt.Sprintf("%s/v1/session/windows/%s/icon", r.BaseUrl(), r.PathParam("id"))
@@ -18,7 +18,7 @@ func (self *SprinklesAPI) GetWindow(w rest.ResponseWriter, r *rest.Request) {
     w.WriteJson(&window)
 }
 
-func (self *SprinklesAPI) GetWindowIcon(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetWindowIcon(w rest.ResponseWriter, r *rest.Request) {
     var buffer bytes.Buffer
     var width  uint
     var height uint
@@ -44,7 +44,7 @@ func (self *SprinklesAPI) GetWindowIcon(w rest.ResponseWriter, r *rest.Request) 
 }
 
 
-func (self *SprinklesAPI) GetWindowImage(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetWindowImage(w rest.ResponseWriter, r *rest.Request) {
     var buffer bytes.Buffer
 
     err := self.Plugin("Session").(*SessionPlugin).WriteWindowImage(r.PathParam("id"), &buffer)
@@ -58,7 +58,7 @@ func (self *SprinklesAPI) GetWindowImage(w rest.ResponseWriter, r *rest.Request)
 }
 
 
-func (self *SprinklesAPI) RaiseWindow(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) RaiseWindow(w rest.ResponseWriter, r *rest.Request) {
   err := self.Plugin("Session").(*SessionPlugin).RaiseWindow(r.PathParam("id"))
 
   if err != nil {

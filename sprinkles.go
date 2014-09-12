@@ -6,7 +6,7 @@ import (
 )
 
 const (
-    DEFAULT_STATIC_ASSETS_PATH string = "/usr/share/sprinkles/assets"
+    DEFAULT_STATIC_ASSETS_PATH string = "/usr/share/corona/assets"
 )
 
 type CLIOptions struct {
@@ -16,7 +16,7 @@ type CLIOptions struct {
 }
 
 var logger        gologger.Logger
-var api           SprinklesAPI
+var api           CoronaAPI
 var options       CLIOptions
 
 func PanicIfErr(err error) {
@@ -35,22 +35,22 @@ func init_cli_arguments(){
 }
 
 func main() {
-    logger.Debug("Initializing Sprinkles")
+    logger.Debug("Initializing Corona")
     init_cli_arguments()
     logger.Init(*options.logFilename, *options.logLevel)
 
-    api.Options = SprinklesOptions{
+    api.Options = CoronaOptions{
         StaticRoot: *options.staticAssetsRoot,
     }
 
     api.Init()
 
 
-    logger.Infof("Starting Sprinkles on %s:%d", api.Interface, api.Port)
+    logger.Infof("Starting Corona on %s:%d", api.Interface, api.Port)
     err := api.Serve()
 
     if err != nil {
-        logger.Errorf("Error launching Sprinkles: %s", err)
+        logger.Errorf("Error launching Corona: %s", err)
     }
 
 }

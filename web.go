@@ -12,27 +12,27 @@ import (
     "net/http"
 )
 
-type SprinklesOptions struct {
+type CoronaOptions struct {
     StaticRoot          string
     NoMarkdownAutoparse bool
 }
 
-type SprinklesAPI struct {
+type CoronaAPI struct {
     RestHandler rest.ResourceHandler
     HttpHandler http.Handler
     FileHandler http.Handler
     Port        uint
     Interface   string
     Plugins     map[string]IPlugin
-    Options     SprinklesOptions
+    Options     CoronaOptions
 }
 
-type SprinklesAPIError struct {
+type CoronaAPIError struct {
     Code    int
     Message string
 }
 
-func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (self *CoronaAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //  handle websocket HTTP connection upgrade
     if _, ok := r.Header["Upgrade"]; ok {
         self.HttpHandler.ServeHTTP(w, r)
@@ -76,15 +76,15 @@ func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func (self *SprinklesAPI) Throw(err error, code int, w rest.ResponseWriter) {
+func (self *CoronaAPI) Throw(err error, code int, w rest.ResponseWriter) {
     rest.Error(w, err.Error(), code)
 }
 
-func (self *SprinklesAPI) Plugin(name string) IPlugin {
+func (self *CoronaAPI) Plugin(name string) IPlugin {
     return self.Plugins[name]
 }
 
-func (self *SprinklesAPI) Init() (err error) {
+func (self *CoronaAPI) Init() (err error) {
     if self.Port == 0 {
         self.Port = 9521
     }
@@ -178,7 +178,7 @@ func (self *SprinklesAPI) Init() (err error) {
     return
 }
 
-func (self *SprinklesAPI) Serve() error {
+func (self *CoronaAPI) Serve() error {
     err := http.ListenAndServe(fmt.Sprintf("%s:%d", self.Interface, self.Port), self)
     return err
 }

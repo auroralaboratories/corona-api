@@ -7,12 +7,12 @@ import (
 
 
 
-func (self *SprinklesAPI) GetWorkspaces(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetWorkspaces(w rest.ResponseWriter, r *rest.Request) {
     workspaces, _ := self.Plugin("Session").(*SessionPlugin).GetAllWorkspaces()
     w.WriteJson(&workspaces)
 }
 
-func (self *SprinklesAPI) GetCurrentWorkspace(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetCurrentWorkspace(w rest.ResponseWriter, r *rest.Request) {
     workspaces, _ := self.Plugin("Session").(*SessionPlugin).GetAllWorkspaces()
 
     for _, ws := range workspaces {
@@ -25,7 +25,7 @@ func (self *SprinklesAPI) GetCurrentWorkspace(w rest.ResponseWriter, r *rest.Req
     w.WriteHeader(404)
 }
 
-func (self *SprinklesAPI) GetWorkspace(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetWorkspace(w rest.ResponseWriter, r *rest.Request) {
     workspace_number, _ := strconv.Atoi(r.PathParam("number"))
     workspace, err := self.Plugin("Session").(*SessionPlugin).GetWorkspace(uint(workspace_number))
 
@@ -38,13 +38,13 @@ func (self *SprinklesAPI) GetWorkspace(w rest.ResponseWriter, r *rest.Request) {
 
 
 
-// func (self *SprinklesAPI) SetWorkspace(w rest.ResponseWriter, r *rest.Request) {
+// func (self *CoronaAPI) SetWorkspace(w rest.ResponseWriter, r *rest.Request) {
 //     workspace_number, _   := strconv.Atoi(r.PathParam("number"))
 //     workspace_count,   _  := ewmh.NumberOfDesktopsGet(self.X)
 
 //     if uint(workspace_number) >= workspace_count {
 //         w.WriteHeader(400)
-//         w.WriteJson(&SprinklesAPIError{
+//         w.WriteJson(&CoronaAPIError{
 //             Code:    400,
 //             Message: fmt.Sprintf("Cannot change to non-existent workspace %d", workspace_number),
 //         })

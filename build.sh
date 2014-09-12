@@ -12,9 +12,9 @@ deps)
 
 build)
   $0 deps
-  go build -o bin/sprinkles-api
+  go build -o bin/corona-api
   ;;
 run)
-  go run ${2:-sprinkles-api}
+  go run ${2:-corona-api}
   ;;
 esac

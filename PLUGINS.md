@@ -12,12 +12,12 @@ Models must do the following things:
 * Implement the `IPlugin` inteface
   * Define an _Init()_ method to perform necessary setup/connection
 * Mix-in the `BasePlugin` struct
-* Instantiate the plugin instance in the `SprinklesAPI.Plugins` map (in `web.go`'s _Init()_ method)
+* Instantiate the plugin instance in the `CoronaAPI.Plugins` map (in `web.go`'s _Init()_ method)
 
 
 ## Controllers
 
-Controllers are relatively thin, almost boilerplate, methods that are called by the REST routing engine.  By convention, these are in files prefixed with "`api-`" (e.g.: `api-session-workspaces.go`).  These methods are implemented on `SprinklesAPI` and are responsible for calling the plugin's model implementations, using data passed in via POST data, query strings, or other per-call and environmental factors.
+Controllers are relatively thin, almost boilerplate, methods that are called by the REST routing engine.  By convention, these are in files prefixed with "`api-`" (e.g.: `api-session-workspaces.go`).  These methods are implemented on `CoronaAPI` and are responsible for calling the plugin's model implementations, using data passed in via POST data, query strings, or other per-call and environmental factors.
 
 Controllers must do the following things:
 

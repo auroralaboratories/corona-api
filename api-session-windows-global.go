@@ -5,7 +5,7 @@ import (
     "github.com/ant0ine/go-json-rest/rest"
 )
 
-func (self *SprinklesAPI) GetWindows(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetWindows(w rest.ResponseWriter, r *rest.Request) {
     windows, _ := self.Plugin("Session").(*SessionPlugin).GetAllWindows()
 
     for i, _ := range windows {

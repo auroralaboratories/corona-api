@@ -8,7 +8,7 @@ type ApiStatus struct {
       Ok bool `json:"ok"`
 }
 
-func (self *SprinklesAPI) GetApiStatus(w rest.ResponseWriter, r *rest.Request) {
+func (self *CoronaAPI) GetApiStatus(w rest.ResponseWriter, r *rest.Request) {
       w.WriteJson(&ApiStatus{
           Ok: true,
       })

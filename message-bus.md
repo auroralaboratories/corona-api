@@ -73,4 +73,4 @@ The table below illustrates how this works:
 
 TODO: make this simpler, but for now:
 
-* <https://github.com/ghetzel/sprinkles-ui/blob/master/apps/panel-tint2/panel.js>
+* <https://github.com/ghetzel/corona-ui/blob/master/apps/panel-tint2/panel.js>
