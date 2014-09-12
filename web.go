@@ -38,7 +38,7 @@ func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         self.HttpHandler.ServeHTTP(w, r)
     } else {
     //  paths that start with '/static' route to the file server
-        if strings.HasPrefix(r.URL.Path, "/static") {
+        if strings.HasPrefix(r.URL.Path, "/static/") {
         //  allow user to get raw source with the ?raw=true query string
             raw := (r.URL.Query().Get("raw") == "true")
 
@@ -64,6 +64,10 @@ func (self *SprinklesAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
             }
 
             self.FileHandler.ServeHTTP(w, r)
+
+        }else if strings.HasPrefix(r.URL.Path, "/static") {
+            http.Redirect(w, r, "/static/", 301)
+            return
 
     //  all other paths are treated as REST calls
         }else{
@@ -106,7 +110,7 @@ func (self *SprinklesAPI) Init() (err error) {
     if entry, err := os.Stat(self.Options.StaticRoot); err == nil {
         if entry.IsDir() {
             logger.Infof("Initializing static assets root at %s", self.Options.StaticRoot)
-            self.FileHandler = http.StripPrefix("/static", http.FileServer(http.Dir(self.Options.StaticRoot)))
+            self.FileHandler = http.StripPrefix("/static/", http.FileServer(http.Dir(self.Options.StaticRoot)))
         }
     }else{
         logger.Errorf("Unable to read static assets root at %s", self.Options.StaticRoot)
