@@ -181,17 +181,9 @@ func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
 	id_number, _ := strconv.Atoi(window_id)
 	id := xproto.Window(uint32(id_number))
 
-	if err = ewmh.ActiveWindowSet(self.X, id); err != nil {
-		return
-	}
-
-	if err = self.removeState(id, "_NET_WM_STATE_HIDDEN"); err != nil {
-		return
-	}
-
-	if err = ewmh.RestackWindow(self.X, id); err != nil {
-		return
-	}
+	ewmh.ActiveWindowSet(self.X, id)
+	self.removeState(id, "_NET_WM_STATE_HIDDEN")
+	ewmh.RestackWindow(self.X, id)
 
 	return
 }
