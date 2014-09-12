@@ -180,7 +180,6 @@ func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
 func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
     id_number, err := strconv.Atoi(window_id)
     id             := xproto.Window(uint32(id_number))
-    window         := xwindow.New(self.X, id)
 
 //  unhide the window
     self.removeState(id, "_NET_WM_STATE_HIDDEN")
@@ -189,10 +188,7 @@ func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
     ewmh.RestackWindow(self.X, id)
 
 //  activate the window
-    ewmh.ActiveWindowSet(self.X, id)
-
-//  map the window (deiconify it)
-    window.Map()
+    ewmh.ActiveWindowReq(self.X, id)
 
     return
 }
