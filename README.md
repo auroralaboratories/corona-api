@@ -9,7 +9,7 @@ Today's graphical desktops are getting more and more complex; the de facto idiom
 Web applications, however, have always had a need to be extremely flexible and unconventional in their interface design.  The tools and languages that make up those applications have, in turn, also enabled a much broader and more expressive toolkit for building highly custom user experiences.  Corona aims to extend that flexibility onto the modern Linux desktop.
 
 
-# But If My Launcher Returns a `404` Error I Will Lose My Mind
+# If My Launcher Returns a `404` Error I Will Lose My Mind
 
 That's a totally fair concern.  Like anything new entering an old arena, there will need to be a shift in how common development practices are performed.  Compiled applications have the very positive trait of being somewhat more predictable in how they behave, with extremely well-known failure modes that people understand how to work with (and work around).  Additionally, in building a web application designed to be run outside of the typical browser environment, the expectations of that application change dramatically.  
 
