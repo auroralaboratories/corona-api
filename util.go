@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 func contains(set []string, value string) bool {
     for _, i := range set {
       if i == value {
@@ -18,4 +20,15 @@ func indexOf(set []string, value string) int {
     }
 
     return -1
+}
+
+func Stosl(s string)[]string{
+  return strings.Split(s, ";")
+}
+
+func Stob(s string) bool {
+  if s == "true"{
+    return true
+  }
+  return false
 }

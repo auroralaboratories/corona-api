@@ -169,6 +169,18 @@ func (self *CoronaAPI) Init() (err error) {
 
         &rest.Route{"PUT", "/v1/session/windows/:id/raise",
             self.RaiseWindow },
+
+        &rest.Route{"GET", "/v1/session/applications",
+            self.GetApplications },
+
+        &rest.Route{"GET", "/v1/session/applications/:name",
+            self.GetAppByName },
+
+        &rest.Route{"GET", "/v1/session/applications/find/:pattern",
+            self.SearchAppByName },
+
+        &rest.Route{"GET", "/v1/session/applications/:name/launch",
+            self.LaunchAppByName },
     )
 
     if err != nil {
