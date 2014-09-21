@@ -93,6 +93,7 @@ func (self *CoronaAPI) Init() (err error) {
     self.Plugins["Session"] = &SessionPlugin{}
     self.Plugins["Config"]  = &ConfigPlugin{}
     self.Plugins["Bus"]     = &BusPlugin{}
+    self.Plugins["System"]  = &SystemPlugin{}
 
     for name, plugin := range self.Plugins {
         logger.Infof("Initializing plugin: %s", name)
@@ -181,6 +182,9 @@ func (self *CoronaAPI) Init() (err error) {
 
         &rest.Route{"GET", "/v1/session/applications/:name/launch",
             self.LaunchAppByName },
+
+        &rest.Route{"GET", "/v1/system/stats",
+            self.GetSystemStats },
     )
 
     if err != nil {

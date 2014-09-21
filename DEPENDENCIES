@@ -7,7 +7,9 @@ code.google.com/p/jamslam-freetype-go/freetype
 code.google.com/p/leveldb-go/leveldb
 github.com/ant0ine/go-json-rest/rest
 github.com/BurntSushi/xgbutil
+github.com/cloudfoundry/gosigar
 github.com/ghetzel/go-logger
 github.com/gorilla/websocket
 github.com/russross/blackfriday
 github.com/shurcooL/go/github_flavored_markdown
+github.com/vaughan0/go-ini
