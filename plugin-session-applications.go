@@ -60,13 +60,15 @@ func (self *SessionPlugin) SearchAppByExec(pattern string) []Application{
 }
 
 func (self *SessionPlugin) LaunchAppByName(name string){
-  cmd := strings.Split(self.GetAppByName(name).Exec, " ")[0]
+  cmd := strings.Split(self.GetAppByName(name).Exec, " ")
   self.Launch(cmd)
 }
 
-func (self *SessionPlugin) Launch(command string){
-  cmd := exec.Command(command)
-  // cmd.SysProcAttr.Setpgid = true
+func (self *SessionPlugin) Launch(command []string){
+  exe := command[0]
+  args := command[1:len(command)]
+
+  cmd := exec.Command(exe, args...)
   err := cmd.Start()
   if err != nil {
     log.Fatal(err)
@@ -75,7 +77,7 @@ func (self *SessionPlugin) Launch(command string){
 
 func (self *SessionPlugin) GetAppByName(name string) Application{
   for _, app := range self.GetAppList(){
-    if app.Name == name{
+    if strings.ToLower(app.Name) == strings.ToLower(name){
       return app
     }
   }
