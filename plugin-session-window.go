@@ -38,8 +38,7 @@ type SessionWindow struct {
 }
 
 func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, err error) {
-    id_number, _ := strconv.Atoi(window_id)
-    id := xproto.Window(uint32(id_number))
+    id, _      := self.Atox(window_id)
     xgb_window := xwindow.New(self.X, id)
     window = SessionWindow{}
     process := SessionProcess{}
@@ -134,8 +133,11 @@ func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, er
 }
 
 func (self *SessionPlugin) WriteWindowIcon(window_id string, width uint, height uint, w io.Writer) (err error) {
-    id_number, _ := strconv.Atoi(window_id)
-    id := xproto.Window(uint32(id_number))
+    id, err     := self.Atox(window_id)
+    if err != nil {
+       return
+    }
+
     icon, err := xgraphics.FindIcon(self.X, id, int(width), int(height))
 
     if err != nil {
@@ -147,9 +149,12 @@ func (self *SessionPlugin) WriteWindowIcon(window_id string, width uint, height 
 }
 
 func (self *SessionPlugin) WriteWindowImage(window_id string, w io.Writer) (err error) {
-    id_number, _ := strconv.Atoi(window_id)
-    id := xproto.Window(uint32(id_number))
-    drawable := xproto.Drawable(id)
+    id, err      := self.Atox(window_id)
+    if err != nil {
+       return
+    }
+
+    drawable   := xproto.Drawable(id)
     image, err := xgraphics.NewDrawable(self.X, drawable)
 
     if err != nil {
@@ -178,8 +183,11 @@ func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
 }
 
 func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
-    id_number, err := strconv.Atoi(window_id)
-    id             := xproto.Window(uint32(id_number))
+    id, err := self.Atox(window_id)
+
+    if err != nil {
+       return
+    }
 
 //  unhide the window
     self.removeState(id, "_NET_WM_STATE_HIDDEN")
@@ -190,6 +198,95 @@ func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
 //  activate the window
     ewmh.ActiveWindowReq(self.X, id)
 
+    return
+}
+
+func (self *SessionPlugin) ActionWindow(window_id string, atom string) (err error) {
+    id, err := self.Atox(window_id)
+
+    if err != nil {
+       return
+    }
+
+    self.addState(id, atom)
+    return
+}
+
+func (self *SessionPlugin) MaximizeWindowHorizontal(window_id string) (err error) {
+    return self.ActionWindow(window_id, "_NET_WM_STATE_MAXIMIZED_HORZ")
+}
+
+func (self *SessionPlugin) MaximizeWindowVertical(window_id string) (err error) {
+    return self.ActionWindow(window_id, "_NET_WM_STATE_MAXIMIZED_VERT")
+}
+
+func (self *SessionPlugin) MaximizeWindow(window_id string) (err error) {
+    self.MaximizeWindowHorizontal(window_id)
+    self.MaximizeWindowVertical(window_id)
+    return
+}
+
+func (self *SessionPlugin) RestoreWindow(window_id string) (err error) {
+    id, err := self.Atox(window_id)
+
+    if err != nil {
+       return
+    }
+
+    self.removeState(id, "_NET_WM_STATE_MAXIMIZED_VERT")
+    self.removeState(id, "_NET_WM_STATE_MAXIMIZED_HORZ")
+    return
+}
+
+func (self *SessionPlugin) MinimizeWindow(window_id string) (err error) {
+    return self.ActionWindow(window_id, "_NET_WM_STATE_HIDDEN")
+}
+
+func (self *SessionPlugin) HideWindow(window_id string) (err error) {
+    return self.ActionWindow(window_id, "_NET_WM_STATE_HIDDEN")
+}
+
+func (self *SessionPlugin) ShowWindow(window_id string) (err error) {
+    id, err := self.Atox(window_id)
+
+    if err != nil {
+       return
+    }
+
+//  unhide the window
+    self.removeState(id, "_NET_WM_STATE_HIDDEN")
+    return
+}
+
+
+func (self *SessionPlugin) MoveWindow(window_id string, x int, y int) (err error) {
+    id, err := self.Atox(window_id)
+
+    if err != nil {
+       return
+    }
+
+    ewmh.MoveWindow(self.X, id, x, y)
+    return
+}
+
+
+func (self *SessionPlugin) ResizeWindow(window_id string, width uint, height uint) (err error) {
+
+    return
+}
+
+
+
+
+func (self *SessionPlugin) Atox(window_id string) (id xproto.Window, err error) {
+    id_number, err := strconv.Atoi(window_id)
+
+    if err != nil {
+        return
+    }
+
+    id = xproto.Window(uint32(id_number))
     return
 }
 
@@ -204,13 +301,7 @@ func (self *SessionPlugin) hasState(id xproto.Window, state string) bool {
 }
 
 func (self *SessionPlugin) addState(id xproto.Window, state string) (err error) {
-    states, _ := ewmh.WmStateGet(self.X, id)
-
-    if !self.hasState(id, state) {
-        states = append(states, state)
-        err = ewmh.WmStateSet(self.X, id, states)
-    }
-
+    err = ewmh.WmStateReq(self.X, id, 0, state)
     return
 }
 

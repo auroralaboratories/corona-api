@@ -98,7 +98,10 @@ func (self *CoronaAPI) Init() (err error) {
     for name, plugin := range self.Plugins {
         logger.Infof("Initializing plugin: %s", name)
         err := plugin.Init()
-        PanicIfErr(err)
+
+        if err != nil {
+            logger.Fatalf("Unable to initialize plugin %s: %s", name, err.Error())
+        }
     }
 
 //  initialize non-rest HTTP handlers
@@ -168,8 +171,14 @@ func (self *CoronaAPI) Init() (err error) {
         &rest.Route{"GET", "/v1/session/windows/:id/image",
             self.GetWindowImage },
 
-        &rest.Route{"PUT", "/v1/session/windows/:id/raise",
-            self.RaiseWindow },
+        &rest.Route{"PUT", "/v1/session/windows/:id/:action",
+            self.ActionWindow },
+
+        &rest.Route{"PUT", "/v1/session/windows/:id/move/:x/:y",
+            self.MoveWindow },
+
+        &rest.Route{"PUT", "/v1/session/windows/:id/resize/:width/:height",
+            self.ResizeWindow },
 
         &rest.Route{"GET", "/v1/session/applications",
             self.GetApplications },
