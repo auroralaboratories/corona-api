@@ -1,26 +1,27 @@
-package main
+package session
 
 import (
+    "fmt"
+    "io"
+    "strconv"
     "github.com/BurntSushi/xgb/xproto"
     "github.com/BurntSushi/xgbutil/ewmh"
     "github.com/BurntSushi/xgbutil/xgraphics"
     "github.com/BurntSushi/xgbutil/xwindow"
-    "io"
-    "strconv"
 )
 
 type SessionProcess struct {
-    PID     uint   `json:"pid"`
-    Command string `json:"command"`
-    User    string `json:"user"`
-    UID     uint   `json:"uid"`
+    PID     uint                        `json:"pid"`
+    Command string                      `json:"command"`
+    User    string                      `json:"user"`
+    UID     uint                        `json:"uid"`
 }
 
 type SessionWindowGeometry struct {
-    X      int  `json:"x"`
-    Y      int  `json:"y"`
-    Width  uint `json:"width"`
-    Height uint `json:"height"`
+    X      int                          `json:"x"`
+    Y      int                          `json:"y"`
+    Width  uint                         `json:"width"`
+    Height uint                         `json:"height"`
 }
 
 type SessionWindow struct {
@@ -37,144 +38,139 @@ type SessionWindow struct {
     Active        bool                  `json:"active,omitempty"`
 }
 
-func (self *SessionPlugin) GetWindow(window_id string) (window SessionWindow, err error) {
-    id, _      := self.Atox(window_id)
-    xgb_window := xwindow.New(self.X, id)
-    window = SessionWindow{}
-    process := SessionProcess{}
+func (self *SessionModule) GetWindow(window_id string) (SessionWindow, error) {
+    window := SessionWindow{}
 
-    window.ID = uint32(id)
-    window.Title, _ = ewmh.WmNameGet(self.X, id)
-    //window.IconUri           = r.Path() + "/" + id
-    window_workspace, _ := ewmh.WmDesktopGet(self.X, id)
-    active_window, _ := ewmh.ActiveWindowGet(self.X)
+    if id, err := self.toX11WindowId(window_id); err == nil {
+        xgbWindow           := xwindow.New(self.X, id)
+        geom, _             := xgbWindow.DecorGeometry()
+        process             := SessionProcess{}
+        window.ID            = uint32(id)
+        window.Title, _      = ewmh.WmNameGet(self.X, id)
+        //window.IconUri           = r.Path() + "/" + id
+        windowWorkspace, _  := ewmh.WmDesktopGet(self.X, id)
+        activeWinId, _      := ewmh.ActiveWindowGet(self.X)
 
-    if window_workspace == 0xFFFFFFFF {
-        window.AllWorkspaces = true
-    } else {
-        window.Workspace = window_workspace
-    }
+        if windowWorkspace == 0xFFFFFFFF {
+            window.AllWorkspaces = true
+        }else{
+            window.Workspace = windowWorkspace
+        }
 
-    if id == active_window {
-        window.Active = true
-    }
-
-    window_geometry, _ := xgb_window.DecorGeometry()
+        if id == activeWinId {
+            window.Active = true
+        }
 
     //  calculate window dimensions from desktop and window frame boundaries
-    window.Dimensions.Width = uint(window_geometry.Width())
-    window.Dimensions.Height = uint(window_geometry.Height())
-    window.Dimensions.X = window_geometry.X()
-    window.Dimensions.Y = window_geometry.Y()
+        window.Dimensions.Width  = uint(geom.Width())
+        window.Dimensions.Height = uint(geom.Height())
+        window.Dimensions.X      = geom.X()
+        window.Dimensions.Y      = geom.Y()
 
-    process.PID, _ = ewmh.WmPidGet(self.X, id)
-
-    window.Process = process
+    //  fill in process details
+        process.PID, _           = ewmh.WmPidGet(self.X, id)
+        window.Process           = process
 
     //  get window state flags
-    window.Flags = make(map[string]bool)
+        window.Flags = make(map[string]bool)
 
     //  minimized
-    if self.hasState(id, "_NET_WM_STATE_HIDDEN") {
-        window.Flags["minimized"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_HIDDEN`) {
+            window.Flags["minimized"] = true
+        }
 
     //  shaded
-    if self.hasState(id, "_NET_WM_STATE_SHADED") {
-        window.Flags["shaded"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_SHADED`) {
+            window.Flags[`shaded`] = true
+        }
 
     //  maximized
-    if self.hasState(id, "_NET_WM_STATE_MAXIMIZED_VERT") && self.hasState(id, "_NET_WM_STATE_MAXIMIZED_HORZ") {
-        window.Flags["maximized"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_MAXIMIZED_VERT`) && self.x11HasWmState(id, `_NET_WM_STATE_MAXIMIZED_HORZ`) {
+            window.Flags[`maximized`] = true
+        }
 
     //  above
-    if self.hasState(id, "_NET_WM_STATE_ABOVE") {
-        window.Flags["above"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_ABOVE`) {
+            window.Flags[`above`] = true
+        }
 
     //  below
-    if self.hasState(id, "_NET_WM_STATE_BELOW") {
-        window.Flags["below"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_BELOW`) {
+            window.Flags[`below`] = true
+        }
 
     //  urgent
-    if self.hasState(id, "_NET_WM_STATE_DEMANDS_ATTENTION") {
-        window.Flags["urgent"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_DEMANDS_ATTENTION`) {
+            window.Flags[`urgent`] = true
+        }
 
     //  skip_taskbar
-    if self.hasState(id, "_NET_WM_STATE_SKIP_TASKBAR") {
-        window.Flags["skip_taskbar"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_SKIP_TASKBAR`) {
+            window.Flags[`skip_taskbar`] = true
+        }
 
     //  skip_pager
-    if self.hasState(id, "_NET_WM_STATE_SKIP_PAGER") {
-        window.Flags["skip_pager"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_SKIP_PAGER`) {
+            window.Flags[`skip_pager`] = true
+        }
 
     //  sticky
-    if self.hasState(id, "_NET_WM_STATE_STICKY") {
-        window.Flags["sticky"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_STICKY`) {
+            window.Flags[`sticky`] = true
+        }
 
     //  fullscreen
-    if self.hasState(id, "_NET_WM_STATE_FULLSCREEN") {
-        window.Flags["fullscreen"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_FULLSCREEN`) {
+            window.Flags[`fullscreen`] = true
+        }
 
     //  modal
-    if self.hasState(id, "_NET_WM_STATE_MODAL") {
-        window.Flags["modal"] = true
-    }
+        if self.x11HasWmState(id, `_NET_WM_STATE_MODAL`) {
+            window.Flags[`modal`] = true
+        }
 
-    return
+        return window, nil
+    }else{
+        return window, err
+    }
 }
 
-func (self *SessionPlugin) WriteWindowIcon(window_id string, width uint, height uint, w io.Writer) (err error) {
-    id, err     := self.Atox(window_id)
-    if err != nil {
-       return
+func (self *SessionModule) WriteWindowIcon(window_id string, width uint, height uint, w io.Writer) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+        if icon, err := xgraphics.FindIcon(self.X, id, int(width), int(height)); err == nil {
+            return icon.WritePng(w)
+        }else{
+            return err
+        }
+    }else{
+        return err
     }
-
-    icon, err := xgraphics.FindIcon(self.X, id, int(width), int(height))
-
-    if err != nil {
-        return
-    }
-
-    err = icon.WritePng(w)
-    return
 }
 
-func (self *SessionPlugin) WriteWindowImage(window_id string, w io.Writer) (err error) {
-    id, err      := self.Atox(window_id)
-    if err != nil {
-       return
+func (self *SessionModule) WriteWindowImage(window_id string, w io.Writer) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+        drawable   := xproto.Drawable(id)
+
+        if image, err := xgraphics.NewDrawable(self.X, drawable); err == nil {
+            image.XSurfaceSet(id)
+            image.XDraw()
+
+            return image.WritePng(w)
+        }else{
+            return err
+        }
+    }else{
+        return err
     }
-
-    drawable   := xproto.Drawable(id)
-    image, err := xgraphics.NewDrawable(self.X, drawable)
-
-    if err != nil {
-        return
-    }
-
-    image.XSurfaceSet(id)
-    image.XDraw()
-
-    err = image.WritePng(w)
-    return
 }
 
-func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
+func (self *SessionModule) GetAllWindows() ([]SessionWindow, error) {
     clients, _ := ewmh.ClientListGet(self.X)
 
-    //  allocate window objects
+//  allocate window objects
     windows := make([]SessionWindow, len(clients))
 
-    //  for each window...
+//  for each window...
     for i, id := range clients {
         windows[i], _ = self.GetWindow(strconv.Itoa(int(id)))
     }
@@ -182,136 +178,129 @@ func (self *SessionPlugin) GetAllWindows() ([]SessionWindow, error) {
     return windows, nil
 }
 
-func (self *SessionPlugin) RaiseWindow(window_id string) (err error) {
-    id, err := self.Atox(window_id)
+func (self *SessionModule) RaiseWindow(window_id string) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+    //  unhide the window
+        self.removeState(id, `_NET_WM_STATE_HIDDEN`)
 
-    if err != nil {
-       return
+    //  move the window to the stop of the stacking order
+        ewmh.RestackWindow(self.X, id)
+
+    //  activate the window
+        ewmh.ActiveWindowReq(self.X, id)
+    }else{
+        return err
     }
 
-//  unhide the window
-    self.removeState(id, "_NET_WM_STATE_HIDDEN")
-
-//  move the window to the stop of the stacking order
-    ewmh.RestackWindow(self.X, id)
-
-//  activate the window
-    ewmh.ActiveWindowReq(self.X, id)
-
-    return
+    return nil
 }
 
-func (self *SessionPlugin) ActionWindow(window_id string, atom string) (err error) {
-    id, err := self.Atox(window_id)
-
-    if err != nil {
-       return
+func (self *SessionModule) ActionWindow(window_id string, atom string) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+        self.addState(id, atom)
+    }else{
+        return err
     }
 
-    self.addState(id, atom)
-    return
+    return nil
 }
 
-func (self *SessionPlugin) MaximizeWindowHorizontal(window_id string) (err error) {
+func (self *SessionModule) MaximizeWindowHorizontal(window_id string) error {
     return self.ActionWindow(window_id, "_NET_WM_STATE_MAXIMIZED_HORZ")
 }
 
-func (self *SessionPlugin) MaximizeWindowVertical(window_id string) (err error) {
+func (self *SessionModule) MaximizeWindowVertical(window_id string) error {
     return self.ActionWindow(window_id, "_NET_WM_STATE_MAXIMIZED_VERT")
 }
 
-func (self *SessionPlugin) MaximizeWindow(window_id string) (err error) {
-    self.MaximizeWindowHorizontal(window_id)
-    self.MaximizeWindowVertical(window_id)
-    return
+func (self *SessionModule) MaximizeWindow(window_id string) error {
+    if err := self.MaximizeWindowHorizontal(window_id); err == nil {
+        return self.MaximizeWindowVertical(window_id)
+    }else{
+        return err
+    }
 }
 
-func (self *SessionPlugin) RestoreWindow(window_id string) (err error) {
-    id, err := self.Atox(window_id)
-
-    if err != nil {
-       return
+func (self *SessionModule) RestoreWindow(window_id string) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+        self.removeState(id, `_NET_WM_STATE_MAXIMIZED_VERT`)
+        self.removeState(id, `_NET_WM_STATE_MAXIMIZED_HORZ`)
+    }else{
+        return err
     }
 
-    self.removeState(id, "_NET_WM_STATE_MAXIMIZED_VERT")
-    self.removeState(id, "_NET_WM_STATE_MAXIMIZED_HORZ")
-    return
+    return nil
 }
 
-func (self *SessionPlugin) MinimizeWindow(window_id string) (err error) {
-    return self.ActionWindow(window_id, "_NET_WM_STATE_HIDDEN")
+func (self *SessionModule) MinimizeWindow(window_id string) error {
+    return self.ActionWindow(window_id, `_NET_WM_STATE_HIDDEN`)
 }
 
-func (self *SessionPlugin) HideWindow(window_id string) (err error) {
-    return self.ActionWindow(window_id, "_NET_WM_STATE_HIDDEN")
+func (self *SessionModule) HideWindow(window_id string) error {
+    return self.ActionWindow(window_id, `_NET_WM_STATE_HIDDEN`)
 }
 
-func (self *SessionPlugin) ShowWindow(window_id string) (err error) {
-    id, err := self.Atox(window_id)
-
-    if err != nil {
-       return
+func (self *SessionModule) ShowWindow(window_id string) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+    //  unhide the window
+        self.removeState(id, `_NET_WM_STATE_HIDDEN`)
+    }else{
+        return err
     }
 
-//  unhide the window
-    self.removeState(id, "_NET_WM_STATE_HIDDEN")
-    return
+    return nil
 }
 
 
-func (self *SessionPlugin) MoveWindow(window_id string, x int, y int) (err error) {
-    id, err := self.Atox(window_id)
-
-    if err != nil {
-       return
+func (self *SessionModule) MoveWindow(window_id string, x int, y int) error {
+    if id, err := self.toX11WindowId(window_id); err == nil {
+        return ewmh.MoveWindow(self.X, id, x, y)
+    }else{
+        return err
     }
-
-    ewmh.MoveWindow(self.X, id, x, y)
-    return
 }
 
 
-func (self *SessionPlugin) ResizeWindow(window_id string, width uint, height uint) (err error) {
-
-    return
+func (self *SessionModule) ResizeWindow(window_id string, width uint, height uint) error {
+    return fmt.Errorf("Not implemented")
 }
 
-
-
-
-func (self *SessionPlugin) Atox(window_id string) (id xproto.Window, err error) {
-    id_number, err := strconv.Atoi(window_id)
-
-    if err != nil {
-        return
+func (self *SessionModule) toX11WindowId(window_id string) (xproto.Window, error) {
+    if id_number, err := strconv.Atoi(window_id); err == nil {
+        return xproto.Window(uint32(id_number)), nil
+    }else{
+        return xproto.Window(0), err
     }
-
-    id = xproto.Window(uint32(id_number))
-    return
 }
 
-func (self *SessionPlugin) hasState(id xproto.Window, state string) bool {
+func (self *SessionModule) x11HasWmState(id xproto.Window, state string) bool {
     states, _ := ewmh.WmStateGet(self.X, id)
 
-    if indexOf(states, state) >= 0 {
-        return true
+    for _, s := range states {
+        if s == state {
+            return true
+        }
     }
 
     return false
 }
 
-func (self *SessionPlugin) addState(id xproto.Window, state string) (err error) {
-    err = ewmh.WmStateReq(self.X, id, 0, state)
-    return
+func (self *SessionModule) addState(id xproto.Window, state string) error {
+    return ewmh.WmStateReq(self.X, id, 0, state)
 }
 
-func (self *SessionPlugin) removeState(id xproto.Window, state string) (err error) {
+func (self *SessionModule) removeState(id xproto.Window, state string) error {
     states, _ := ewmh.WmStateGet(self.X, id)
 
-    if i := indexOf(states, state); i >= 0 {
-        states = append(states[:i], states[i+1:]...)
-        err = ewmh.WmStateSet(self.X, id, states)
+    for i, s := range states {
+        if s == state {
+            states = append(states[:i], states[i+1:]...)
+
+            if err := ewmh.WmStateSet(self.X, id, states); err != nil {
+                return err
+            }
+        }
     }
 
-    return
+    return nil
 }

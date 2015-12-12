@@ -15,8 +15,10 @@ eval $(go env)
 
 if [ -s DEPENDENCIES ]; then
   echo 'Processing dependencies...'
-  for d in $(find . -name DEPENDENCIES -exec cat {} \; | sort | uniq); do
-    go get $d
+  for f in $(find . -name DEPENDENCIES); do
+    for d in $(cat ${f} | sort | uniq); do
+      go get $d
+    done
   done
 fi
 

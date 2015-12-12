@@ -1,8 +1,7 @@
-package main
+package session
 
 import (
     "fmt"
-    "errors"
     "github.com/BurntSushi/xgbutil/ewmh"
 )
 
@@ -15,46 +14,51 @@ type SessionWorkspace struct {
 }
 
 
-func (self *SessionPlugin) GetWorkspace(workspace_number uint) (workspace SessionWorkspace, err error) {
-    workspace              = SessionWorkspace{}
-    workspace_count,   _  := ewmh.NumberOfDesktopsGet(self.X)
-    workspace_names, _    := ewmh.DesktopNamesGet(self.X)
-    current_workspace, _  := ewmh.CurrentDesktopGet(self.X)
-
-    if uint(workspace_number) >= workspace_count {
-        err = errors.New(fmt.Sprintf("Cannot get workspace index %d, only %d workspaces exist", workspace_number, workspace_count))
-        return
+func (self *SessionModule) GetWorkspace(workspaceNumber uint) (SessionWorkspace, error) {
+    workspace := SessionWorkspace{
+        Number: workspaceNumber,
     }
 
-    workspace.Number       = workspace_number
-    
+    count,   _           := ewmh.NumberOfDesktopsGet(self.X)
+    names, _             := ewmh.DesktopNamesGet(self.X)
+    currentWorkspace, _  := ewmh.CurrentDesktopGet(self.X)
+
+    if uint(workspaceNumber) >= count {
+        return workspace, fmt.Errorf("Cannot get workspace index %d, only %d workspaces exist", workspaceNumber, count)
+    }
+
 //  set workspace name if one is given
 //  TODO: what does this array look like if only a few workspaces have names, but not all?
 //        might get a nil assign error
-    if int(workspace_number) < len(workspace_names) {
-        workspace.Name         = workspace_names[workspace_number]
+    if int(workspaceNumber) < len(names) {
+        workspace.Name  = names[workspaceNumber]
     }
 
-//  flag which workspace is the active one 
-    if workspace_number == current_workspace {
+//  flag which workspace is the active one
+    if workspaceNumber == currentWorkspace {
         workspace.IsCurrent = true
     }
 
-    return
+    return workspace, nil
 }
 
 
-func (self *SessionPlugin) GetAllWorkspaces() (workspaces []SessionWorkspace, err error) {
-    workspace_count,   _  := ewmh.NumberOfDesktopsGet(self.X)
+func (self *SessionModule) GetAllWorkspaces() ([]SessionWorkspace, error) {
+    if count, err  := ewmh.NumberOfDesktopsGet(self.X); err == nil {
+    //  allocate workspace objects
+        workspaces := make([]SessionWorkspace, count)
 
-//  allocate workspace objects
-    workspaces             = make([]SessionWorkspace, workspace_count)
+    //  for each workspace...
+        for i := uint(0); i < count; i++ {
+            if workspace, err := self.GetWorkspace(i); err == nil {
+                workspaces[i] = workspace
+            }else{
+                return nil, err
+            }
+        }
 
-//  for each workspace...
-    for i := uint(0); i < workspace_count; i++ {
-        workspace, _ := self.GetWorkspace(i)
-        workspaces[i] = workspace
+        return workspaces, nil
+    }else{
+        return nil, err
     }
-
-    return
 }

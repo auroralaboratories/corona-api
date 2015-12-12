@@ -5,6 +5,7 @@ import (
     log "github.com/Sirupsen/logrus"
     "github.com/codegangsta/cli"
     "github.com/auroralaboratories/corona-api/util"
+    "github.com/auroralaboratories/corona-api/modules/session"
 )
 
 func main(){
@@ -38,6 +39,7 @@ func main(){
     }
 
     app.Commands = append(app.Commands, util.RegisterSubcommands()...)
+    app.Commands = append(app.Commands, session.RegisterSubcommands()...)
 
     app.Run(os.Args)
 }
