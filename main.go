@@ -1,56 +1,43 @@
 package main
 
 import (
-  "flag"
-  "github.com/ghetzel/go-logger"
+    "os"
+    log "github.com/Sirupsen/logrus"
+    "github.com/codegangsta/cli"
+    "github.com/auroralaboratories/corona-api/util"
 )
 
-const (
-    DEFAULT_STATIC_ASSETS_PATH string = "/usr/share/corona/assets"
-)
+func main(){
+    app                      := cli.NewApp()
+    app.Name                  = util.ApplicationName
+    app.Usage                 = util.ApplicationSummary
+    app.Version               = util.ApplicationVersion
+    app.EnableBashCompletion  = false
+    app.Before                = func(c *cli.Context) error {
+        if c.Bool(`quiet`) {
+            util.ParseLogLevel(`quiet`)
+        }else{
+            util.ParseLogLevel(c.String(`log-level`))
+        }
 
-type CLIOptions struct {
-    logLevel         *string
-    logFilename      *string
-    staticAssetsRoot *string
-}
-
-var logger        gologger.Logger
-var api           CoronaAPI
-var options       CLIOptions
-
-func PanicIfErr(err error) {
-    if err != nil {
-        panic(err)
-    }
-}
-
-
-func init_cli_arguments(){
-    options.logLevel         = flag.String("level",       "debug",                    "Level of logging verbosity")
-    options.logFilename      = flag.String("logfile",     "-",                        "The file to log output to, or dash (-) for standard output")
-    options.staticAssetsRoot = flag.String("static-root", DEFAULT_STATIC_ASSETS_PATH, "Path where the API will serve static assets from")
-
-    flag.Parse()
-}
-
-func main() {
-    logger.Debug("Initializing Corona")
-    init_cli_arguments()
-    logger.Init(*options.logFilename, *options.logLevel)
-
-    api.Options = CoronaOptions{
-        StaticRoot: *options.staticAssetsRoot,
+        log.Infof("%s v%s started at %s", util.ApplicationName, util.ApplicationVersion, util.StartedAt)
+        return nil
     }
 
-    api.Init()
-
-
-    logger.Infof("Starting Corona on %s:%d", api.Interface, api.Port)
-    err := api.Serve()
-
-    if err != nil {
-        logger.Errorf("Error launching Corona: %s", err)
+    app.Flags = []cli.Flag{
+        cli.StringFlag{
+            Name:   `log-level, L`,
+            Usage:  `Level of log output verbosity`,
+            Value:  `info`,
+            EnvVar: `LOGLEVEL`,
+        },
+        cli.BoolFlag{
+            Name:   `quiet, q`,
+            Usage:  `Don't print any log output to standard error`,
+        },
     }
 
+    app.Commands = append(app.Commands, util.RegisterSubcommands()...)
+
+    app.Run(os.Args)
 }

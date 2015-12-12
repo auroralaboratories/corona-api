@@ -1,48 +1,49 @@
-package main
+package util
 
-import "strings"
+import (
+    "fmt"
+    "os"
+    "time"
+    log "github.com/Sirupsen/logrus"
+    "github.com/codegangsta/cli"
+)
 
-func contains(set []string, value string) bool {
-    for _, i := range set {
-      if i == value {
-        return true
-      }
+const ApplicationName    = `corona-api`
+const ApplicationSummary = `a REST API for building web-based graphical user session applications`
+const ApplicationVersion = `0.0.5`
+
+var StartedAt = time.Now()
+
+func ParseLogLevel(level string) {
+    log.SetOutput(os.Stderr)
+    log.SetFormatter(&log.TextFormatter{
+        ForceColors: true,
+    })
+
+    switch level {
+    case `info`:
+        log.SetLevel(log.InfoLevel)
+    case `warn`:
+        log.SetLevel(log.WarnLevel)
+    case `error`:
+        log.SetLevel(log.ErrorLevel)
+    case `fatal`:
+        log.SetLevel(log.FatalLevel)
+    case `quiet`:
+        log.SetLevel(log.PanicLevel)
+    default:
+        log.SetLevel(log.DebugLevel)
     }
-
-    return false
 }
 
-func indexOf(set []string, value string) int {
-    for idx, i := range set {
-      if i == value {
-        return idx
-      }
+func RegisterSubcommands() []cli.Command {
+    return []cli.Command{
+        {
+            Name:        `version`,
+            Usage:       `Output only the version string and exit`,
+            Action:      func(c *cli.Context){
+                fmt.Println(ApplicationVersion)
+            },
+        },
     }
-
-    return -1
-}
-
-func compact(set []string) []string {
-  rv := make([]string, 0, len(set))
-
-  for _, v := range set {
-    if strings.TrimSpace(v) == "" {
-      continue
-    }
-
-    rv = append(rv, v)
-  }
-
-  return rv
-}
-
-func Stosl(s string)[]string{
-  return strings.Split(s, ";")
-}
-
-func Stob(s string) bool {
-  if s == "true"{
-    return true
-  }
-  return false
 }
