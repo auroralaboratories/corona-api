@@ -22,6 +22,16 @@ func main(){
         }
 
         log.Infof("%s v%s started at %s", util.ApplicationName, util.ApplicationVersion, util.StartedAt)
+
+        api := NewApi()
+
+        api.Address = c.String(`address`)
+        api.Port    = c.Int(`port`)
+
+        if err := api.Serve(); err != nil {
+            log.Fatalf("Failed to start API: %v", err)
+        }
+
         return nil
     }
 
@@ -35,6 +45,16 @@ func main(){
         cli.BoolFlag{
             Name:   `quiet, q`,
             Usage:  `Don't print any log output to standard error`,
+        },
+        cli.StringFlag{
+            Name:   `address, a`,
+            Usage:  `The address the API server should listen on`,
+            Value:  `127.0.0.1`,
+        },
+        cli.IntFlag{
+            Name:   `port, p`,
+            Usage:  `The port the API server should listen on`,
+            Value:  25672,
         },
     }
 

@@ -3,9 +3,11 @@ package util
 import (
     "fmt"
     "os"
+    "net/http"
     "time"
     log "github.com/Sirupsen/logrus"
     "github.com/codegangsta/cli"
+    "gopkg.in/unrolled/render.v1"
 )
 
 const ApplicationName    = `corona-api`
@@ -13,6 +15,7 @@ const ApplicationSummary = `a REST API for building web-based graphical user ses
 const ApplicationVersion = `0.0.5`
 
 var StartedAt = time.Now()
+var ApiRenderer = render.New()
 
 func ParseLogLevel(level string) {
     log.SetOutput(os.Stderr)
@@ -46,4 +49,22 @@ func RegisterSubcommands() []cli.Command {
             },
         },
     }
+}
+
+func Respond(w http.ResponseWriter, code int, payload interface{}, err error) {
+    response := make(map[string]interface{})
+    response[`responded_at`] = time.Now().Format(time.RFC3339)
+    response[`payload`]      = payload
+
+    if code >= http.StatusBadRequest {
+        response[`success`] = false
+
+        if err != nil {
+            response[`error`] = err.Error()
+        }
+    }else{
+        response[`success`] = true
+    }
+
+    ApiRenderer.JSON(w, code, response)
 }
