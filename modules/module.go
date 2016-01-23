@@ -9,6 +9,7 @@ import (
 type IModule interface {
     Init()                           error
     LoadRoutes(*httprouter.Router)   error
+    GetConfigRoot()                  map[string]interface{}
     SetConfig(string, interface{})
     GetConfig(string)                (interface{}, bool)
     GetConfigOr(string, interface{}) (interface{})
@@ -21,6 +22,10 @@ type BaseModule struct {
 
 func (self *BaseModule) Init() error {
     return fmt.Errorf("Unimplemented plugin initializer")
+}
+
+func (self *BaseModule) GetConfigRoot() map[string]interface{} {
+    return self.Config
 }
 
 func (self *BaseModule) SetConfig(name string, value interface{}) {

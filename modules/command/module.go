@@ -48,10 +48,27 @@ func (self *CommandModule) LoadRoutes(router *httprouter.Router) error {
 func (self *CommandModule) Init() error {
     self.Commands = make(map[string]Command)
 
-    if cmdInterface, ok := self.GetConfig(`commands`); ok {
+    if commands, err := GenerateCommands(`cmd`, self.GetConfigRoot()); err == nil {
+        for k, v := range commands {
+            self.Commands[k] = v
+        }
+    }else{
+        return err
+    }
+
+    return nil
+}
+
+
+func GenerateCommands(prefix string, config map[string]interface{}) (map[string]Command, error) {
+    commands := make(map[string]Command)
+
+    if cmdInterface, ok := config[`commands`]; ok {
         switch cmdInterface.(type) {
         case map[string]interface{}:
             for key, commandConfigI := range cmdInterface.(map[string]interface{}) {
+                key = prefix + `:` + key
+
                 log.Infof("CommandModule: initializing command '%s'", key)
 
                 switch commandConfigI.(type) {
@@ -61,9 +78,15 @@ func (self *CommandModule) Init() error {
                         Key: key,
                     }
 
-                    if v, ok := commandConfig[`shell`]; ok {
+                    if v, ok := commandConfig[`shellwrap`]; ok {
                         if s, err := stringutil.ToString(v); err == nil {
-                            command.Shell = s
+                            command.ShellWrap = s
+                        }
+                    }
+
+                    if v, ok := commandConfig[`detach`]; ok {
+                        if s, err := stringutil.ToString(v); err == nil {
+                            command.Detach = (s == `true`)
                         }
                     }
 
@@ -74,14 +97,14 @@ func (self *CommandModule) Init() error {
                     }
 
                     if err := command.Init(); err == nil {
-                        self.Commands[key] = command
+                        commands[key] = command
                     }else{
-                        return err
+                        return commands, err
                     }
                 }
             }
         }
     }
 
-    return nil
+    return commands, nil
 }
