@@ -1,8 +1,11 @@
 github.com/codegangsta/cli
 github.com/codegangsta/negroni
 github.com/elazarl/go-bindata-assetfs
+github.com/ghetzel/diecast
+github.com/ghodss/yaml
 github.com/jteeuwen/go-bindata
 github.com/julienschmidt/httprouter
+github.com/mattn/go-shellwords
 github.com/satori/go.uuid
 github.com/shutterstock/go-stockutil
 github.com/Sirupsen/logrus

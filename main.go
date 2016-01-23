@@ -1,11 +1,13 @@
 package main
 
 import (
+    "fmt"
     "os"
     log "github.com/Sirupsen/logrus"
     "github.com/codegangsta/cli"
     "github.com/auroralaboratories/corona-api/util"
     "github.com/auroralaboratories/corona-api/modules/session"
+    "github.com/auroralaboratories/corona-api/modules/command"
 )
 
 func main(){
@@ -25,11 +27,19 @@ func main(){
 
         api := NewApi()
 
-        api.Address = c.String(`address`)
-        api.Port    = c.Int(`port`)
+        api.Address     = c.String(`address`)
+        api.Port        = c.Int(`port`)
 
-        if err := api.Serve(); err != nil {
-            log.Fatalf("Failed to start API: %v", err)
+        if l := c.StringSlice(`modules`); l != nil && len(l) > 0 {
+            api.ModulesList = l
+        }
+
+        if err := api.Init(); err == nil {
+            if err := api.Serve(); err != nil {
+                return fmt.Errorf("Failed to start API: %v", err)
+            }
+        }else{
+            return fmt.Errorf("Failed to initialize API: %v", err)
         }
 
         return nil
@@ -56,10 +66,15 @@ func main(){
             Usage:  `The port the API server should listen on`,
             Value:  25672,
         },
+        cli.StringSliceFlag{
+            Name:   `modules, m`,
+            Usage:  `The set of modules to load on startup (default: all)`,
+        },
     }
 
     app.Commands = append(app.Commands, util.RegisterSubcommands()...)
     app.Commands = append(app.Commands, session.RegisterSubcommands()...)
+    app.Commands = append(app.Commands, command.RegisterSubcommands()...)
 
     app.Run(os.Args)
 }

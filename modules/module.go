@@ -2,13 +2,16 @@ package modules
 
 import (
     "fmt"
+
+    "github.com/julienschmidt/httprouter"
 )
 
 type IModule interface {
-    Init()                            error
+    Init()                           error
+    LoadRoutes(*httprouter.Router)   error
     SetConfig(string, interface{})
-    GetConfig(string)                  (interface{}, bool)
-    GetConfigOr(string, interface{})   (interface{})
+    GetConfig(string)                (interface{}, bool)
+    GetConfigOr(string, interface{}) (interface{})
 }
 
 type BaseModule struct {
@@ -16,7 +19,7 @@ type BaseModule struct {
     Config map[string]interface{}
 }
 
-func (self *BaseModule) Init() (err error) {
+func (self *BaseModule) Init() error {
     return fmt.Errorf("Unimplemented plugin initializer")
 }
 
