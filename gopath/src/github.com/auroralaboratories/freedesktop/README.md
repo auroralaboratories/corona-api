@@ -1,0 +1,2 @@
+# freedesktop.org Desktop Standards Toolkit
+A set of Golang packages that implement utilities for building desktop management applications in accordance with the [Free Desktop Specifications](http://www.freedesktop.org/wiki/Specifications)

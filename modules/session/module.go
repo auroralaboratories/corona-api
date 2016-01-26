@@ -4,19 +4,22 @@ import (
     "bytes"
     "fmt"
     "net/http"
-    "strings"
+    "sort"
+    // "strings"
     "github.com/BurntSushi/xgbutil"
     "github.com/codegangsta/cli"
     "github.com/julienschmidt/httprouter"
     "github.com/shutterstock/go-stockutil/stringutil"
     "github.com/auroralaboratories/corona-api/util"
     "github.com/auroralaboratories/corona-api/modules"
+    "github.com/auroralaboratories/freedesktop/desktop"
 )
 
 type SessionModule struct {
     modules.BaseModule
 
-    X *xgbutil.XUtil
+    X            *xgbutil.XUtil
+    Applications *desktop.EntrySet
 }
 
 func RegisterSubcommands() []cli.Command {
@@ -203,14 +206,24 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
     })
 
     router.GET(`/api/session/applications`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-        util.Respond(w, http.StatusOK, self.GetAppList(), nil)
+        keys := make([]string, 0)
+
+        for key, _ := range self.Applications.Entries {
+            keys = append(keys, key)
+        }
+
+        sort.Strings(keys)
+
+        util.Respond(w, http.StatusOK, keys, nil)
     })
 
     router.GET(`/api/session/applications/:name`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-        if app, err := self.GetAppByName(params.ByName(`name`)); err == nil {
+        key := params.ByName(`name`)
+
+        if app, ok := self.Applications.Entries[key]; ok {
             util.Respond(w, http.StatusOK, app, nil)
         }else{
-            util.Respond(w, http.StatusNotFound, nil, err)
+            util.Respond(w, http.StatusNotFound, nil, fmt.Errorf("Could not locate application '%s'", key))
         }
     })
 
@@ -218,13 +231,12 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
     // })
 
     router.PUT(`/api/session/applications/:name/launch`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-        appName := strings.Replace(params.ByName(`name`) , `%20`, " ", -1)
-
-        if err := self.LaunchAppByName(appName); err == nil {
+        if err := self.Applications.LaunchEntry(params.ByName(`name`)); err == nil {
             util.Respond(w, http.StatusAccepted, nil, nil)
         }else{
             util.Respond(w, http.StatusNotFound, nil, err)
         }
+
     })
 
     return nil
@@ -232,5 +244,11 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 
 func (self *SessionModule) Init() (err error) {
     self.X, err = xgbutil.NewConn()
-    return
+    self.Applications = desktop.NewEntrySet()
+
+    if err := self.Applications.Refresh(); err != nil {
+        return err
+    }
+
+    return nil
 }
