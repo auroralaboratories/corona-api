@@ -9,6 +9,7 @@ import (
     "github.com/auroralaboratories/corona-api/modules"
     "github.com/auroralaboratories/corona-api/modules/session"
     "github.com/auroralaboratories/corona-api/modules/command"
+    "github.com/auroralaboratories/corona-api/modules/soundctl"
     "github.com/auroralaboratories/corona-api/util"
     "github.com/codegangsta/negroni"
     "github.com/ghetzel/diecast/diecast"
@@ -19,7 +20,7 @@ import (
 
 const (
     DEFAULT_CONFIG_PATH  = `corona.yml`
-    DEFAULT_MODULES_LIST = `command,session`
+    DEFAULT_MODULES_LIST = `command,session,soundctl`
 )
 
 type Configuration struct {
@@ -88,6 +89,12 @@ func (self *API) LoadModules() error {
             }
         case `command`:
             module = &command.CommandModule{
+                BaseModule: modules.BaseModule{
+                    Config: moduleConfig,
+                },
+            }
+        case `soundctl`:
+            module = &soundctl.SoundctlModule{
                 BaseModule: modules.BaseModule{
                     Config: moduleConfig,
                 },
