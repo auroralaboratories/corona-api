@@ -1,3 +1,5 @@
-code.google.com/p/jamslam-freetype-go/freetype
 github.com/auroralaboratories/freedesktop
+github.com/BurntSushi/freetype-go/freetype
+github.com/BurntSushi/graphics-go/graphics
 github.com/BurntSushi/xgbutil
+github.com/vaughan0/go-ini

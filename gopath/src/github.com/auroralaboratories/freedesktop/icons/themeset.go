@@ -8,19 +8,28 @@ import (
     "github.com/shutterstock/go-stockutil/sliceutil"
 )
 
+const (
+    DEFAULT_THEMESET_THEME_INTERNAL_NAME = `hicolor`
+    DEFAULT_AUTO_HICOLOR_PENALTY         = 0.0
+)
+
 type Themeset struct {
-    Themes     []*Theme
-    ThemeDirs  []string
+    Themes             []*Theme
+    ThemeDirs          []string
+    DefaultTheme       string
+    AutoHiColorPenalty float64
 
     themeIndex map[string]*Theme
 }
 
 func NewThemeset() *Themeset {
     return &Themeset{
-        Themes:     make([]*Theme, 0),
-        ThemeDirs:  GetIconThemePaths(),
+        Themes:             make([]*Theme, 0),
+        ThemeDirs:          GetIconThemePaths(),
+        DefaultTheme:       DEFAULT_THEMESET_THEME_INTERNAL_NAME,
+        AutoHiColorPenalty: DEFAULT_AUTO_HICOLOR_PENALTY,
 
-        themeIndex: make(map[string]*Theme),
+        themeIndex:         make(map[string]*Theme),
     }
 }
 
@@ -61,6 +70,8 @@ func (self *Themeset) Load() error {
     return nil
 }
 
+// Retrieve a theme by its internal name.
+//
 func (self *Themeset) GetTheme(name string) (*Theme, bool) {
     if rv, ok := self.themeIndex[name]; ok {
         return rv, true
@@ -69,12 +80,41 @@ func (self *Themeset) GetTheme(name string) (*Theme, bool) {
     }
 }
 
+
+// Locate an icon by name and preferred size using the DefaultTheme as a starting point
+// for the search.
+//
+func (self *Themeset) FindIcon(names []string, size int) (*Icon, bool) {
+    return self.FindIconViaTheme(self.DefaultTheme, names, size)
+}
+
+
 // Locate an icon by name and preferred size, starting with the named theme and resursively
-// searching
+// searching.
+//
 func (self *Themeset) FindIconViaTheme(themeName string, names []string, size int) (*Icon, bool) {
+    var hiColorIcon *Icon
+
+//  If desired, a hicolor icon of the given name will be searched for. If the found hicolor
+//  icon's (size * penalty) is closer to the preferred size than found theme icon size, use it.
+//
+//  This is to address the fact that most applications tend to install their branded icons in
+//  the hicolor theme because it is guaranteed to be present on all compliant systems.
+//
+    if themeName != `hicolor` && self.AutoHiColorPenalty > 0.0 {
+    //  attempt to locate the icon from the hicolor theme
+        if v, ok := self.FindIconViaTheme(`hicolor`, names, size); ok {
+            hiColorIcon = v
+        }
+    }
+
     if theme, ok := self.themeIndex[themeName]; ok {
         if icon, ok := theme.FindIcon(names, size); ok {
-            return icon, true
+            if hiColorIcon != nil && (self.AutoHiColorPenalty * float64(hiColorIcon.DistanceFromSize(size))) < float64(icon.DistanceFromSize(size)) {
+                return hiColorIcon, true
+            }else{
+                return icon, true
+            }
         }else{
             for _, inheritedThemeName := range theme.Inherits {
                 if inheritedThemeName != `` {

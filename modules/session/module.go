@@ -238,7 +238,6 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
         rv := make([]string, 0)
         listType := params.ByName(`type`)
 
-
     //  filters
         filterThemes           := strings.Split(req.URL.Query().Get(`themes`), `,`)
         filterIconContextTypes := strings.Split(req.URL.Query().Get(`contexts`), `,`)
@@ -329,6 +328,10 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
                         value = strings.ToLower(icon.Context.Name)
                     case `display-names`:
                         value = icon.DisplayName
+                    case `sizes`:
+                        if v, err := stringutil.ToString(icon.Context.Size); err == nil {
+                            value = v
+                        }
                     default:
                         util.Respond(w, http.StatusBadRequest, nil, fmt.Errorf("Unrecognized list type '%s'", listType))
                         return
@@ -351,13 +354,33 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
     router.GET(`/api/session/icons/view/:name/size/:size`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
         var iconSize int
 
-        iconNames := strings.Split(params.ByName(`name`), `,`)
-        iconSizeS := params.ByName(`size`)
+        iconNames    := strings.Split(params.ByName(`name`), `,`)
+        iconSizeS    := params.ByName(`size`)
+        themeName    := req.URL.Query().Get(`theme`)
+
+        if themeName == `` {
+            themeName = self.Themeset.DefaultTheme
+        }
 
         if v, err := stringutil.ConvertToInteger(iconSizeS); err == nil {
             iconSize = int(v)
 
-            if icon, ok := self.Themeset.FindIconViaTheme(`Faenza-Dark`, iconNames, iconSize); ok {
+            var icon *icons.Icon
+
+            switch req.URL.Query().Get(`mode`) {
+            case `hicolor-first`:
+                if hiColorIcon, ok := self.Themeset.FindIconViaTheme(`hicolor`, iconNames, iconSize); ok {
+                    icon = hiColorIcon
+                }else if themeIcon, ok := self.Themeset.FindIconViaTheme(themeName, iconNames, iconSize); ok {
+                    icon = themeIcon
+                }
+            default:
+                if themeIcon, ok := self.Themeset.FindIconViaTheme(themeName, iconNames, iconSize); ok {
+                    icon = themeIcon
+                }
+            }
+
+            if icon != nil {
                 var contentType string
 
                 switch icon.Type {

@@ -4,8 +4,10 @@ import (
     "fmt"
     "io"
     "strconv"
+
     "github.com/BurntSushi/xgb/xproto"
     "github.com/BurntSushi/xgbutil/ewmh"
+    "github.com/BurntSushi/xgbutil/icccm"
     "github.com/BurntSushi/xgbutil/xgraphics"
     "github.com/BurntSushi/xgbutil/xwindow"
 )
@@ -36,6 +38,9 @@ type SessionWindow struct {
     Dimensions    SessionWindowGeometry `json:"dimensions"`
     Process       SessionProcess        `json:"process"`
     Active        bool                  `json:"active,omitempty"`
+    ClassInstance string                `json:"class_instance,omitempty"`
+    ClassName     string                `json:"class_name,omitempty"`
+    EntryName     string                `json:"entry_name,omitempty"`
 }
 
 func (self *SessionModule) GetWindow(window_id string) (SessionWindow, error) {
@@ -127,6 +132,16 @@ func (self *SessionModule) GetWindow(window_id string) (SessionWindow, error) {
     //  modal
         if self.x11HasWmState(id, `_NET_WM_STATE_MODAL`) {
             window.Flags[`modal`] = true
+        }
+
+    //  ICCCM WM_CLASS instance
+        if wmClass, err := icccm.WmClassGet(self.X, id); err == nil {
+            window.ClassInstance = wmClass.Instance
+            window.ClassName     = wmClass.Class
+
+            if entry, ok := self.Applications.Entries[window.ClassInstance]; ok {
+                window.EntryName = entry.Key
+            }
         }
 
         return window, nil
