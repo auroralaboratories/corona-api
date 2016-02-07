@@ -1,20 +1,18 @@
 package pulseaudio
 
 import (
-    "bufio"
-    "bytes"
     "fmt"
-    "os/exec"
-    "regexp"
-    "strings"
 
-    "github.com/shutterstock/go-stockutil/stringutil"
     "github.com/auroralaboratories/corona-api/modules/soundctl/backends"
     "github.com/auroralaboratories/corona-api/modules/soundctl/types"
+    "github.com/auroralaboratories/pulse"
 )
 
 type Backend struct {
     backends.BaseBackend
+
+    client *pulse.Client
+    info   pulse.ServerInfo
 }
 
 func New() *Backend {
@@ -27,7 +25,17 @@ func New() *Backend {
 
 
 func (self *Backend) Refresh() error {
-    if err := self.loadInfo(); err != nil {
+    if self.client == nil {
+        if client, err := pulse.NewClient(`corona-api`); err == nil {
+            self.client = client
+        }else{
+            return err
+        }
+    }
+
+    if info, err := self.client.GetServerInfo(); err == nil {
+        self.info = info
+    }else{
         return err
     }
 
@@ -40,9 +48,9 @@ func (self *Backend) Refresh() error {
 
 
 func (self *Backend) GetCurrentOutput() (types.IOutput, error) {
-    if defaultSink := self.GetProperty(`default_sink`, ``); defaultSink != `` {
-        if outputs := self.GetOutputsByProperty(`name`, defaultSink); len(outputs) == 1 {
-            return outputs[0], nil
+    if defaultSink := self.info.DefaultSinkName; defaultSink != `` {
+        if output, ok := self.GetOutputByName(defaultSink); ok {
+            return output, nil
         }
     }
 
@@ -55,73 +63,25 @@ func (self *Backend) SetCurrentOutput(index int) error {
 }
 
 
-func (self *Backend) loadInfo() error {
-    if output, err := exec.Command(`pactl`, `info`).Output(); err == nil {
-        scanner := bufio.NewScanner(bytes.NewReader(output))
-
-        for scanner.Scan() {
-            line := scanner.Text()
-
-            parts := strings.SplitN(line, `: `, 2)
-
-            if len(parts) == 2 {
-                key        := strings.ToLower(strings.Replace(parts[0], ` `, `_`, -1))
-                value      := strings.TrimSpace(parts[1])
-
-                self.SetProperty(key, value)
-            }
-        }
-    }else{
-        return err
-    }
-
-    return nil
-}
-
-
 func (self *Backend) loadSinks() error {
-    if output, err := exec.Command(`pactl`, `list`, `sinks`).Output(); err == nil {
-        scanner := bufio.NewScanner(bytes.NewReader(output))
-
-        var newOutput *Output
-
-        for scanner.Scan() {
-            line := scanner.Text()
-
-            if rx, err := regexp.Compile(`^Sink #(\d+)$`); err == nil && rx.MatchString(line) {
-                if newOutput != nil {
-                    if err := self.AddOutput(newOutput); err != nil {
-                        return err
-                    }
-                }
-
-                newOutput = &Output{
-                    sinkIndex: -1,
-                }
-
-                if err := newOutput.Initialize(self); err != nil {
-                    return err
-                }
-
-                if matches := rx.FindStringSubmatch(line); len(matches) == 2 {
-                    if v, err := stringutil.ConvertToInteger(matches[1]); err == nil {
-                        newOutput.sinkIndex = int(v)
-                        newOutput.SetProperty(`index`, matches[1])
-                        newOutput.SetName(fmt.Sprintf("sink-%s", matches[1]))
-                    }
-                }
-            }else if rx, err := regexp.Compile("^\t([^\\:\t]+):\\s+(.*)$"); err == nil && rx.MatchString(line) && newOutput.sinkIndex >= 0 {
-                if matches := rx.FindStringSubmatch(line); len(matches) == 3 {
-                    key        := strings.ToLower(strings.Replace(matches[1], ` `, `_`, -1))
-                    value      := strings.TrimSpace(matches[2])
-
-                    newOutput.SetProperty(key, value)
-                }
+    if sinks, err := self.client.GetSinks(); err == nil {
+        for _, sink := range sinks {
+            newOutput := &Output{
+                sink: &sink,
             }
 
-        }
+            if err := newOutput.Initialize(self); err != nil {
+                return err
+            }
 
-        if newOutput != nil {
+            newOutput.SetName(sink.Name)
+
+            newOutput.SetProperty(`index`,       fmt.Sprintf("%d", sink.Index))
+            newOutput.SetProperty(`volume`,      fmt.Sprintf("%f", sink.VolumeFactor))
+            newOutput.SetProperty(`channels`,    fmt.Sprintf("%d", sink.Channels))
+            newOutput.SetProperty(`description`, sink.Description)
+            newOutput.SetProperty(`muted`,       fmt.Sprintf("%s", sink.Muted))
+
             if err := self.AddOutput(newOutput); err != nil {
                 return err
             }

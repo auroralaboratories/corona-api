@@ -42,6 +42,15 @@ func (self *BaseBackend) SetProperty(key string, value string) {
     self.Properties[key] = value
 }
 
+func (self *BaseBackend) GetOutputByName(name string) (types.IOutput, bool) {
+    for _, output := range self.Outputs {
+        if output.GetName() == name {
+            return output, true
+        }
+    }
+
+    return nil, false
+}
 
 func (self *BaseBackend) GetOutputsByProperty(key string, value string) []types.IOutput {
     rv := make([]types.IOutput, 0)

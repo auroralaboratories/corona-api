@@ -165,14 +165,14 @@ func (self *SoundctlModule) getNamedOutput(backendName string, outputName string
         if outputName == `current` {
             if output, err := backend.GetCurrentOutput(); err == nil {
                 return output, nil
+            }else{
+                return output, err
             }
         }else if i, err := stringutil.ConvertToInteger(outputName); err == nil && int(i) < len(outputs) {
             return outputs[i], nil
         }else{
-            for _, output := range outputs {
-                if output.GetName() == outputName {
-                    return output, nil
-                }
+            if output, ok := backend.GetOutputByName(outputName); ok {
+                return output, nil
             }
         }
 

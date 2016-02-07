@@ -24,17 +24,7 @@ fi
 
 case "$1" in
 test)
-  go test -v
-
-  base="${PWD}"
-
-  for i in {desktop,icons,mime,util}; do
-    if [ -d "${i}" ]; then
-      cd "${i}"
-      go test -v
-      cd "${base}"
-    fi
-  done
+  go test -test.v
   ;;
 *)
   echo "Unknown action '${1}'"

@@ -44,7 +44,7 @@ fi
 
 # build it!
 echo "Building..."
-CGO_ENABLED=0 go build -a $GOFLAGS -o bin/${PROJECT} ${REPO_PATH}/
+go build -a $GOFLAGS -o bin/${PROJECT} ${REPO_PATH}/
 
 
 # vendor the dependencies

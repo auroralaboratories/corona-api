@@ -9,6 +9,7 @@ type IBackend interface {
     SetProperty(string, string)
     AddOutput(output IOutput) error
     GetOutputs() []IOutput
+    GetOutputByName(string) (IOutput, bool)
     GetOutputsByProperty(string, string) []IOutput
     GetCurrentOutput() (IOutput, error)
     SetCurrentOutput(int) error

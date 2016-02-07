@@ -3,16 +3,19 @@ package session
 import (
     "bytes"
     "fmt"
+    "io/ioutil"
     "net/http"
     "sort"
-    // "strings"
+    "strings"
     "github.com/BurntSushi/xgbutil"
     "github.com/codegangsta/cli"
     "github.com/julienschmidt/httprouter"
+    "github.com/shutterstock/go-stockutil/sliceutil"
     "github.com/shutterstock/go-stockutil/stringutil"
     "github.com/auroralaboratories/corona-api/util"
     "github.com/auroralaboratories/corona-api/modules"
     "github.com/auroralaboratories/freedesktop/desktop"
+    "github.com/auroralaboratories/freedesktop/icons"
 )
 
 type SessionModule struct {
@@ -20,6 +23,7 @@ type SessionModule struct {
 
     X            *xgbutil.XUtil
     Applications *desktop.EntrySet
+    Themeset     *icons.Themeset
 }
 
 func RegisterSubcommands() []cli.Command {
@@ -227,6 +231,161 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
         }
     })
 
+
+    router.GET(`/api/session/icons/list/:type`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+        var filterMinSize, filterMaxSize int
+
+        rv := make([]string, 0)
+        listType := params.ByName(`type`)
+
+
+    //  filters
+        filterThemes           := strings.Split(req.URL.Query().Get(`themes`), `,`)
+        filterIconContextTypes := strings.Split(req.URL.Query().Get(`contexts`), `,`)
+        filterIconFileTypes    := strings.Split(req.URL.Query().Get(`filetypes`), `,`)
+        filterMinSizeS         := req.URL.Query().Get(`minsize`)
+        filterMaxSizeS         := req.URL.Query().Get(`maxsize`)
+        filterIsScalable       := req.URL.Query().Get(`scalable`)
+
+        if filterMinSizeS != `` {
+            if v, err := stringutil.ConvertToInteger(filterMinSizeS); err == nil {
+                filterMinSize = int(v)
+            }else{
+                util.Respond(w, http.StatusBadRequest, nil, err)
+                return
+            }
+        }
+
+        if filterMaxSizeS != `` {
+            if v, err := stringutil.ConvertToInteger(filterMaxSizeS); err == nil {
+                filterMaxSize = int(v)
+            }else{
+                util.Respond(w, http.StatusBadRequest, nil, err)
+                return
+            }
+        }
+
+        for _, theme := range self.Themeset.Themes {
+            if len(filterThemes) > 0 && filterThemes[0] != `` {
+                if !sliceutil.ContainsString(filterThemes, strings.ToLower(theme.InternalName)) {
+                    inInherited := false
+
+                    for _, inheritedThemeName := range theme.Inherits {
+                        if sliceutil.ContainsString(filterThemes, strings.ToLower(inheritedThemeName)) {
+                            inInherited = true
+                            break
+                        }
+                    }
+
+                    if !inInherited {
+                        continue
+                    }
+                }
+            }
+
+            switch listType {
+            case `themes`:
+                if !sliceutil.ContainsString(rv, theme.Name) {
+                    rv = append(rv, theme.InternalName)
+                }
+            default:
+                for _, icon := range theme.Icons {
+                //  filter context types
+                    if len(filterIconContextTypes) > 0 && filterIconContextTypes[0] != `` {
+                        if !sliceutil.ContainsString(filterIconContextTypes, strings.ToLower(icon.Context.Name)) {
+                            continue
+                        }
+                    }
+
+                //  filter icon filetypes
+                    if len(filterIconFileTypes) > 0 && filterIconFileTypes[0] != `` {
+                        if !sliceutil.ContainsString(filterIconFileTypes, icon.Type) {
+                            continue
+                        }
+                    }
+
+                //  filter icon size contraints
+                    if filterMinSize > 0 && icon.Context.MinSize < filterMinSize {
+                        continue
+                    }
+
+                    if filterMaxSize > 0 && icon.Context.MaxSize > filterMaxSize {
+                        continue
+                    }
+
+                //  filter for scalable/non-scalable icons
+                    if filterIsScalable == `true` && icon.Context.Type != icons.IconContextScalable {
+                        continue
+                    }else if filterIsScalable == `false` && icon.Context.Type == icons.IconContextScalable {
+                        continue
+                    }
+
+                    var value string
+
+                    switch listType {
+                    case `names`:
+                        value = icon.Name
+                    case `contexts`:
+                        value = strings.ToLower(icon.Context.Name)
+                    case `display-names`:
+                        value = icon.DisplayName
+                    default:
+                        util.Respond(w, http.StatusBadRequest, nil, fmt.Errorf("Unrecognized list type '%s'", listType))
+                        return
+                    }
+
+                    if value != `` {
+                        if !sliceutil.ContainsString(rv, value) {
+                            rv = append(rv, value)
+                        }
+                    }
+                }
+            }
+        }
+
+        sort.Strings(rv)
+
+        util.Respond(w, http.StatusOK, rv, nil)
+    })
+
+    router.GET(`/api/session/icons/view/:name/size/:size`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+        var iconSize int
+
+        iconNames := strings.Split(params.ByName(`name`), `,`)
+        iconSizeS := params.ByName(`size`)
+
+        if v, err := stringutil.ConvertToInteger(iconSizeS); err == nil {
+            iconSize = int(v)
+
+            if icon, ok := self.Themeset.FindIconViaTheme(`Faenza-Dark`, iconNames, iconSize); ok {
+                var contentType string
+
+                switch icon.Type {
+                case `png`:
+                    contentType = `image/png`
+                case `svg`:
+                    contentType = `image/svg+xml`
+                default:
+                    util.Respond(w, http.StatusBadRequest, nil, fmt.Errorf("Unsupported icon type '%s'", icon.Type))
+                    return
+                }
+
+                defer icon.Close()
+
+                if data, err := ioutil.ReadAll(icon); err == nil {
+                    w.Header().Set(`Content-Type`, contentType)
+                    w.Write(data)
+                }else{
+                    util.Respond(w, http.StatusBadRequest, nil, err)
+                }
+            }else{
+                util.Respond(w, http.StatusNotFound, nil, fmt.Errorf("Could not locate icon"))
+            }
+        }else{
+            util.Respond(w, http.StatusBadRequest, nil, err)
+        }
+    })
+
     // router.GET(`/api/session/applications/find/:pattern`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
     // })
 
@@ -245,8 +404,14 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 func (self *SessionModule) Init() (err error) {
     self.X, err = xgbutil.NewConn()
     self.Applications = desktop.NewEntrySet()
+    self.Themeset = icons.NewThemeset()
 
     if err := self.Applications.Refresh(); err != nil {
+        return err
+    }
+
+
+    if err := self.Themeset.Load(); err != nil {
         return err
     }
 
