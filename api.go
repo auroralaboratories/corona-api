@@ -7,14 +7,16 @@ import (
     "strings"
 
     "github.com/auroralaboratories/corona-api/modules"
-    "github.com/auroralaboratories/corona-api/modules/session"
     "github.com/auroralaboratories/corona-api/modules/command"
+    "github.com/auroralaboratories/corona-api/modules/session"
     "github.com/auroralaboratories/corona-api/modules/soundctl"
     "github.com/auroralaboratories/corona-api/util"
     "github.com/codegangsta/negroni"
     "github.com/ghetzel/diecast/diecast"
     "github.com/ghodss/yaml"
     "github.com/julienschmidt/httprouter"
+    "github.com/rs/cors"
+
     log "github.com/Sirupsen/logrus"
 )
 
@@ -38,6 +40,7 @@ type API struct {
 
     router            *httprouter.Router
     server            *negroni.Negroni
+    cors              *cors.Cors
 }
 
 func NewApi() *API {
@@ -155,8 +158,14 @@ func (self *API) Serve() error {
         }
     }()
 
+    self.cors = cors.New(cors.Options{
+        AllowedOrigins: []string{ `*` },
+        AllowedHeaders: []string{ `*` },
+    })
+
     self.server = negroni.New()
     self.server.Use(negroni.NewRecovery())
+    self.server.Use(self.cors)
     self.server.UseHandler(self.router)
 
     self.server.Run(fmt.Sprintf("%s:%d", self.Address, self.Port))

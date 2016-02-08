@@ -7,6 +7,7 @@ github.com/ghodss/yaml
 github.com/jteeuwen/go-bindata
 github.com/julienschmidt/httprouter
 github.com/mattn/go-shellwords
+github.com/rs/cors
 github.com/satori/go.uuid
 github.com/shutterstock/go-stockutil
 github.com/Sirupsen/logrus
