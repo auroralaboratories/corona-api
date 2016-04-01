@@ -1,6 +1,4 @@
 /bin/
 /pkg/
 /src/
-/gopath/bin
-/gopath/pkg
 /corona.yml
