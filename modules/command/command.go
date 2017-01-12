@@ -46,7 +46,7 @@ func (self *Command) Init() error {
 
 	if args, err := parser.Parse(fullCmdLine); err == nil {
 		self.cmd = args[0]
-		self.args = args[1:len(args)]
+		self.args = args[1:]
 	} else {
 		return err
 	}

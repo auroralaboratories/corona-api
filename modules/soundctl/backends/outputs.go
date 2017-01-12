@@ -6,15 +6,14 @@ import (
 
 type BaseOutput struct {
 	types.IOutput `json:"-"`
-
-	Name       string            `json:"name"`
-	Backend    types.IBackend    `json:"-"`
-	Properties map[string]string `json:"properties"`
+	Name          string                 `json:"name"`
+	Backend       types.IBackend         `json:"-"`
+	Properties    map[string]interface{} `json:"properties"`
 }
 
 func (self *BaseOutput) Initialize(backend types.IBackend) error {
 	self.Backend = backend
-	self.Properties = make(map[string]string)
+	self.Properties = make(map[string]interface{})
 	return nil
 }
 
@@ -26,7 +25,7 @@ func (self *BaseOutput) SetName(name string) {
 	self.Name = name
 }
 
-func (self *BaseOutput) GetProperty(key string, fallback string) string {
+func (self *BaseOutput) GetProperty(key string, fallback interface{}) interface{} {
 	if v, ok := self.Properties[key]; ok {
 		return v
 	} else {
@@ -34,6 +33,6 @@ func (self *BaseOutput) GetProperty(key string, fallback string) string {
 	}
 }
 
-func (self *BaseOutput) SetProperty(key string, value string) {
+func (self *BaseOutput) SetProperty(key string, value interface{}) {
 	self.Properties[key] = value
 }

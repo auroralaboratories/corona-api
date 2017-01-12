@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"net/http"
 	// "strings"
-	log "github.com/Sirupsen/logrus"
 	"github.com/auroralaboratories/corona-api/modules"
 	"github.com/auroralaboratories/corona-api/util"
-	"github.com/codegangsta/cli"
-	"github.com/julienschmidt/httprouter"
+	"github.com/ghetzel/cli"
+	"github.com/husobee/vestigo"
+	"github.com/op/go-logging"
 	"github.com/shutterstock/go-stockutil/stringutil"
 )
 
+var log = logging.MustGetLogger(`corona-api/modules/command`)
+
 type CommandModule struct {
 	modules.BaseModule
-
 	Commands map[string]Command
 }
 
@@ -23,13 +24,13 @@ func RegisterSubcommands() []cli.Command {
 	return []cli.Command{}
 }
 
-func (self *CommandModule) LoadRoutes(router *httprouter.Router) error {
-	router.GET(`/api/commands/list`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func (self *CommandModule) LoadRoutes(router *vestigo.Router) error {
+	router.Get(`/api/commands/list`, func(w http.ResponseWriter, req *http.Request) {
 		util.Respond(w, http.StatusOK, self.Commands, nil)
 	})
 
-	router.PUT(`/api/commands/run/:name`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		name := params.ByName(`name`)
+	router.Put(`/api/commands/run/:name`, func(w http.ResponseWriter, req *http.Request) {
+		name := vestigo.Param(req, `name`)
 
 		if command, ok := self.Commands[name]; ok {
 			if results, err := command.Execute(); err == nil {

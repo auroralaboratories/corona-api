@@ -2,22 +2,19 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strings"
-
 	"github.com/auroralaboratories/corona-api/modules"
 	"github.com/auroralaboratories/corona-api/modules/command"
 	"github.com/auroralaboratories/corona-api/modules/session"
 	"github.com/auroralaboratories/corona-api/modules/soundctl"
 	"github.com/auroralaboratories/corona-api/util"
-	"github.com/codegangsta/negroni"
-	"github.com/ghetzel/diecast/diecast"
+	"github.com/ghetzel/diecast"
 	"github.com/ghodss/yaml"
-	"github.com/julienschmidt/httprouter"
-	"github.com/rs/cors"
-
-	log "github.com/Sirupsen/logrus"
+	"github.com/husobee/vestigo"
+	"github.com/urfave/negroni"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
 )
 
 const (
@@ -37,10 +34,8 @@ type API struct {
 	Modules     []modules.IModule
 	ConfigPath  string
 	Config      Configuration
-
-	router *httprouter.Router
-	server *negroni.Negroni
-	cors   *cors.Cors
+	router      *vestigo.Router
+	server      *negroni.Negroni
 }
 
 func NewApi() *API {
@@ -50,7 +45,7 @@ func NewApi() *API {
 		Modules:     make([]modules.IModule, 0),
 		ModulesList: strings.Split(DEFAULT_MODULES_LIST, `,`),
 		Port:        25672,
-		UiDirectory: `embedded`,
+		UiDirectory: `./ui`, // TODO: change this to embedded
 	}
 }
 
@@ -141,31 +136,26 @@ func (self *API) Init() error {
 }
 
 func (self *API) Serve() error {
-	self.router = httprouter.New()
+	self.router = vestigo.NewRouter()
+
+	self.router.SetGlobalCors(&vestigo.CorsAccessControl{
+		AllowOrigin:      []string{"*"},
+		AllowCredentials: true,
+		AllowMethods:     []string{`GET`, `POST`, `PUT`, `DELETE`},
+		MaxAge:           3600 * time.Second,
+		AllowHeaders:     []string{"*"},
+	})
 
 	if err := self.loadRoutes(); err != nil {
 		return err
 	}
 
-	go func() {
-		dc := diecast.NewServer()
-		dc.Address = self.Address
-		dc.Port = self.Port + 1
-		dc.LogLevel = `debug`
-
-		if err := dc.Initialize(); err == nil {
-			dc.Serve()
-		}
-	}()
-
-	self.cors = cors.New(cors.Options{
-		AllowedOrigins: []string{`*`},
-		AllowedHeaders: []string{`*`},
-	})
+	if err := self.setupUserInterface(); err != nil {
+		return err
+	}
 
 	self.server = negroni.New()
 	self.server.Use(negroni.NewRecovery())
-	self.server.Use(self.cors)
 	self.server.UseHandler(self.router)
 
 	self.server.Run(fmt.Sprintf("%s:%d", self.Address, self.Port))
@@ -173,8 +163,35 @@ func (self *API) Serve() error {
 	return nil
 }
 
+func (self *API) setupUserInterface() error {
+	uiDir := self.UiDirectory
+
+	if self.UiDirectory == `embedded` {
+		uiDir = `/`
+	}
+
+	ui := diecast.NewServer(uiDir, `*.html`)
+
+	// ui.AdditionalFunctions = template.FuncMap{}
+
+	// if self.UiDirectory == `embedded` {
+	// 	ui.SetFileSystem(assetFS())
+	// }
+
+	if err := ui.Initialize(); err != nil {
+		return err
+	}
+
+	// routes not registered below will fallback to the UI server
+	vestigo.CustomNotFoundHandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ui.ServeHTTP(w, req)
+	})
+
+	return nil
+}
+
 func (self *API) loadRoutes() error {
-	self.router.GET(`/api/status`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	self.router.Get(`/api/status`, func(w http.ResponseWriter, req *http.Request) {
 		util.Respond(w, http.StatusOK, map[string]interface{}{
 			`started_at`: util.StartedAt,
 		}, nil)

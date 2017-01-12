@@ -2,11 +2,9 @@ package util
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	"github.com/ghetzel/cli"
 	"gopkg.in/unrolled/render.v1"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -16,28 +14,6 @@ const ApplicationVersion = `0.0.5`
 
 var StartedAt = time.Now()
 var ApiRenderer = render.New()
-
-func ParseLogLevel(level string) {
-	log.SetOutput(os.Stderr)
-	log.SetFormatter(&log.TextFormatter{
-		ForceColors: true,
-	})
-
-	switch level {
-	case `info`:
-		log.SetLevel(log.InfoLevel)
-	case `warn`:
-		log.SetLevel(log.WarnLevel)
-	case `error`:
-		log.SetLevel(log.ErrorLevel)
-	case `fatal`:
-		log.SetLevel(log.FatalLevel)
-	case `quiet`:
-		log.SetLevel(log.PanicLevel)
-	default:
-		log.SetLevel(log.DebugLevel)
-	}
-}
 
 func RegisterSubcommands() []cli.Command {
 	return []cli.Command{

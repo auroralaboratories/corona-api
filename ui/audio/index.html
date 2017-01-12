@@ -1,0 +1,58 @@
+---
+page:
+    title: Audio Control
+bindings:
+- name: backends
+  resource: :/api/soundctl/backends
+
+- name: backend
+  resource: :/api/soundctl/backends/{{ or .request.query.backend "default" }}
+
+
+---
+{{ $backend := or .request.query.backend "default" }}
+<ul class="nav nav-tabs">
+  <li class="nav-item">
+    <a class="nav-link" href="#">Playback</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Recording</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Output Devices</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="#">Input Devices</a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link" href="#">Configuration</a>
+  </li>
+</ul>
+
+<div class="card">
+  <div class="card-header">
+    Outputs
+  </div>
+  {{ range .bindings.backend.payload.outputs }}
+  <div class="card-block">
+    <div class="card-title">
+      <b>{{ .properties.description }}</b>
+    </div>
+    <div class="card-text">
+      <div class="progress" onclick="corona.setVolume('{{ $backend }}', '{{ .name }}', (event.layerX/event.target.clientWidth))">
+        <div
+          class="progress-bar bg-success"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuenow="{{ percent .properties.volume 1.0 }}"
+          aria-valuemax="100"
+          style="width: {{ percent .properties.volume 1.0 }}%;"
+        >
+          {{ percent .properties.volume 1.0 }}%
+        </div>
+      </div>
+    </div>
+  </div>
+  {{ end }}
+</div>

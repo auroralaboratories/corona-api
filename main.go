@@ -2,48 +2,24 @@ package main
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/auroralaboratories/corona-api/modules/command"
 	"github.com/auroralaboratories/corona-api/modules/session"
 	"github.com/auroralaboratories/corona-api/util"
-	"github.com/codegangsta/cli"
+	"github.com/ghetzel/cli"
+	"github.com/op/go-logging"
 	"os"
 )
 
+var log = logging.MustGetLogger(`main`)
+
 func main() {
+	var api *API
+
 	app := cli.NewApp()
 	app.Name = util.ApplicationName
 	app.Usage = util.ApplicationSummary
 	app.Version = util.ApplicationVersion
 	app.EnableBashCompletion = false
-	app.Before = func(c *cli.Context) error {
-		if c.Bool(`quiet`) {
-			util.ParseLogLevel(`quiet`)
-		} else {
-			util.ParseLogLevel(c.String(`log-level`))
-		}
-
-		log.Infof("%s v%s started at %s", util.ApplicationName, util.ApplicationVersion, util.StartedAt)
-
-		api := NewApi()
-
-		api.Address = c.String(`address`)
-		api.Port = c.Int(`port`)
-
-		if l := c.StringSlice(`modules`); l != nil && len(l) > 0 {
-			api.ModulesList = l
-		}
-
-		if err := api.Init(); err == nil {
-			if err := api.Serve(); err != nil {
-				return fmt.Errorf("Failed to start API: %v", err)
-			}
-		} else {
-			return fmt.Errorf("Failed to initialize API: %v", err)
-		}
-
-		return nil
-	}
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -51,10 +27,6 @@ func main() {
 			Usage:  `Level of log output verbosity`,
 			Value:  `info`,
 			EnvVar: `LOGLEVEL`,
-		},
-		cli.BoolFlag{
-			Name:  `quiet, q`,
-			Usage: `Don't print any log output to standard error`,
 		},
 		cli.StringFlag{
 			Name:  `address, a`,
@@ -75,6 +47,37 @@ func main() {
 	app.Commands = append(app.Commands, util.RegisterSubcommands()...)
 	app.Commands = append(app.Commands, session.RegisterSubcommands()...)
 	app.Commands = append(app.Commands, command.RegisterSubcommands()...)
+
+	app.Before = func(c *cli.Context) error {
+		logging.SetFormatter(logging.MustStringFormatter(`%{color}%{level:.4s}%{color:reset}[%{id:04d}] %{message}`))
+
+		if level, err := logging.LogLevel(c.String(`log-level`)); err == nil {
+			logging.SetLevel(level, ``)
+		} else {
+			return err
+		}
+
+		log.Infof("Starting %s %s", c.App.Name, c.App.Version)
+
+		api = NewApi()
+
+		api.Address = c.String(`address`)
+		api.Port = c.Int(`port`)
+
+		if l := c.StringSlice(`modules`); l != nil && len(l) > 0 {
+			api.ModulesList = l
+		}
+
+		if err := api.Init(); err == nil {
+			if err := api.Serve(); err != nil {
+				return fmt.Errorf("Failed to start API: %v", err)
+			}
+		} else {
+			return fmt.Errorf("Failed to initialize API: %v", err)
+		}
+
+		return nil
+	}
 
 	app.Run(os.Args)
 }

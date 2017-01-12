@@ -2,13 +2,12 @@ package modules
 
 import (
 	"fmt"
-
-	"github.com/julienschmidt/httprouter"
+	"github.com/husobee/vestigo"
 )
 
 type IModule interface {
 	Init() error
-	LoadRoutes(*httprouter.Router) error
+	LoadRoutes(*vestigo.Router) error
 	GetConfigRoot() map[string]interface{}
 	SetConfig(string, interface{})
 	GetConfig(string) (interface{}, bool)

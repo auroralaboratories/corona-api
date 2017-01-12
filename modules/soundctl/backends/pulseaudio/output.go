@@ -7,7 +7,6 @@ import (
 
 type Output struct {
 	backends.BaseOutput
-
 	sink *pulse.Sink
 }
 

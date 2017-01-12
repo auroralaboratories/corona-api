@@ -2,15 +2,14 @@ package pulseaudio
 
 import (
 	"fmt"
-
 	"github.com/auroralaboratories/corona-api/modules/soundctl/backends"
 	"github.com/auroralaboratories/corona-api/modules/soundctl/types"
 	"github.com/auroralaboratories/pulse"
+	// "github.com/shutterstock/go-stockutil/stringutil"
 )
 
 type Backend struct {
 	backends.BaseBackend
-
 	client *pulse.Client
 	info   pulse.ServerInfo
 }
@@ -24,6 +23,8 @@ func New() *Backend {
 }
 
 func (self *Backend) Refresh() error {
+	self.Reset()
+
 	if self.client == nil {
 		if client, err := pulse.NewClient(`corona-api`); err == nil {
 			self.client = client
@@ -72,11 +73,11 @@ func (self *Backend) loadSinks() error {
 
 			newOutput.SetName(sink.Name)
 
-			newOutput.SetProperty(`index`, fmt.Sprintf("%d", sink.Index))
-			newOutput.SetProperty(`volume`, fmt.Sprintf("%f", sink.VolumeFactor))
-			newOutput.SetProperty(`channels`, fmt.Sprintf("%d", sink.Channels))
+			newOutput.SetProperty(`index`, sink.Index)
+			newOutput.SetProperty(`volume`, sink.VolumeFactor)
+			newOutput.SetProperty(`channels`, sink.Channels)
 			newOutput.SetProperty(`description`, sink.Description)
-			newOutput.SetProperty(`muted`, fmt.Sprintf("%s", sink.Muted))
+			newOutput.SetProperty(`muted`, sink.Muted)
 
 			if err := self.AddOutput(newOutput); err != nil {
 				return err

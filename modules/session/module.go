@@ -8,8 +8,8 @@ import (
 	"github.com/auroralaboratories/corona-api/util"
 	"github.com/auroralaboratories/freedesktop/desktop"
 	"github.com/auroralaboratories/freedesktop/icons"
-	"github.com/codegangsta/cli"
-	"github.com/julienschmidt/httprouter"
+	"github.com/ghetzel/cli"
+	"github.com/husobee/vestigo"
 	"github.com/shutterstock/go-stockutil/sliceutil"
 	"github.com/shutterstock/go-stockutil/stringutil"
 	"io/ioutil"
@@ -20,7 +20,6 @@ import (
 
 type SessionModule struct {
 	modules.BaseModule
-
 	X            *xgbutil.XUtil
 	Applications *desktop.EntrySet
 	Themeset     *icons.Themeset
@@ -30,8 +29,8 @@ func RegisterSubcommands() []cli.Command {
 	return []cli.Command{}
 }
 
-func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
-	router.GET(`/api/session/workspaces`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+func (self *SessionModule) LoadRoutes(router *vestigo.Router) error {
+	router.Get(`/api/session/workspaces`, func(w http.ResponseWriter, req *http.Request) {
 		if workspaces, err := self.GetAllWorkspaces(); err == nil {
 			util.Respond(w, http.StatusOK, workspaces, nil)
 		} else {
@@ -39,7 +38,7 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/workspaces/current`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/workspaces/current`, func(w http.ResponseWriter, req *http.Request) {
 		if workspaces, err := self.GetAllWorkspaces(); err == nil {
 			for _, workspace := range workspaces {
 				if workspace.IsCurrent {
@@ -54,9 +53,9 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/windows`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/windows`, func(w http.ResponseWriter, req *http.Request) {
 		if windows, err := self.GetAllWindows(); err == nil {
-			for i, _ := range windows {
+			for i := range windows {
 				windows[i].IconUri = fmt.Sprintf("/api/session/windows/%d/icon", windows[i].ID)
 			}
 
@@ -66,9 +65,11 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/windows/:id`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		if window, err := self.GetWindow(params.ByName(`id`)); err == nil {
-			window.IconUri = fmt.Sprintf("/api/session/windows/%s/icon", params.ByName(`id`))
+	router.Get(`/api/session/windows/:id`, func(w http.ResponseWriter, req *http.Request) {
+		id := vestigo.Param(req, `id`)
+
+		if window, err := self.GetWindow(id); err == nil {
+			window.IconUri = fmt.Sprintf("/api/session/windows/%s/icon", id)
 
 			util.Respond(w, http.StatusOK, window, nil)
 		} else {
@@ -76,10 +77,11 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/windows/:id/icon`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/windows/:id/icon`, func(w http.ResponseWriter, req *http.Request) {
 		var buffer bytes.Buffer
 		width := uint(16)
 		height := uint(16)
+		id := vestigo.Param(req, `id`)
 
 		if w := req.URL.Query().Get(`w`); w != `` {
 			if value, err := stringutil.ConvertToInteger(w); err == nil {
@@ -97,7 +99,7 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 			height = width
 		}
 
-		if err := self.WriteWindowIcon(params.ByName(`id`), width, height, &buffer); err == nil {
+		if err := self.WriteWindowIcon(id, width, height, &buffer); err == nil {
 			w.Header().Set(`Content-Type`, `image/png`)
 			w.Write(buffer.Bytes())
 			return
@@ -106,10 +108,11 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/windows/:id/image`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/windows/:id/image`, func(w http.ResponseWriter, req *http.Request) {
 		var buffer bytes.Buffer
+		id := vestigo.Param(req, `id`)
 
-		if err := self.WriteWindowImage(params.ByName(`id`), &buffer); err == nil {
+		if err := self.WriteWindowImage(id, &buffer); err == nil {
 			w.Header().Set(`Content-Type`, `image/png`)
 			w.Write(buffer.Bytes())
 			return
@@ -118,11 +121,12 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.PUT(`/api/session/windows/:id/do/:action`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Put(`/api/session/windows/:id/do/:action`, func(w http.ResponseWriter, req *http.Request) {
 		var err error
-		id := params.ByName(`id`)
+		id := vestigo.Param(req, `id`)
+		action := vestigo.Param(req, `action`)
 
-		switch params.ByName(`action`) {
+		switch action {
 		case `maximize`:
 			err = self.MaximizeWindow(id)
 
@@ -148,7 +152,7 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 			err = self.RaiseWindow(id)
 
 		default:
-			util.Respond(w, http.StatusBadRequest, nil, fmt.Errorf("Unknown action '%s'", params.ByName(`action`)))
+			util.Respond(w, http.StatusBadRequest, nil, fmt.Errorf("Unknown action '%s'", action))
 			return
 		}
 
@@ -159,18 +163,19 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.PUT(`/api/session/windows/:id/move/:x/:y`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		id := params.ByName(`id`)
+	router.Put(`/api/session/windows/:id/move/:x/:y`, func(w http.ResponseWriter, req *http.Request) {
+		id := vestigo.Param(req, `id`)
+
 		var x, y int
 
-		if value, err := stringutil.ConvertToInteger(params.ByName(`x`)); err == nil {
+		if value, err := stringutil.ConvertToInteger(vestigo.Param(req, `x`)); err == nil {
 			x = int(value)
 		} else {
 			util.Respond(w, http.StatusBadRequest, nil, err)
 			return
 		}
 
-		if value, err := stringutil.ConvertToInteger(params.ByName(`y`)); err == nil {
+		if value, err := stringutil.ConvertToInteger(vestigo.Param(req, `y`)); err == nil {
 			y = int(value)
 		} else {
 			util.Respond(w, http.StatusBadRequest, nil, err)
@@ -184,18 +189,18 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.PUT(`/api/session/windows/:id/resize/:x/:y`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		id := params.ByName(`id`)
+	router.Put(`/api/session/windows/:id/resize/:x/:y`, func(w http.ResponseWriter, req *http.Request) {
+		id := vestigo.Param(req, `id`)
 		var width, height uint
 
-		if value, err := stringutil.ConvertToInteger(params.ByName(`width`)); err == nil {
+		if value, err := stringutil.ConvertToInteger(vestigo.Param(req, `width`)); err == nil {
 			width = uint(value)
 		} else {
 			util.Respond(w, http.StatusBadRequest, nil, err)
 			return
 		}
 
-		if value, err := stringutil.ConvertToInteger(params.ByName(`height`)); err == nil {
+		if value, err := stringutil.ConvertToInteger(vestigo.Param(req, `height`)); err == nil {
 			height = uint(value)
 		} else {
 			util.Respond(w, http.StatusBadRequest, nil, err)
@@ -209,10 +214,10 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/applications`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/applications`, func(w http.ResponseWriter, req *http.Request) {
 		keys := make([]string, 0)
 
-		for key, _ := range self.Applications.Entries {
+		for key := range self.Applications.Entries {
 			keys = append(keys, key)
 		}
 
@@ -221,8 +226,8 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		util.Respond(w, http.StatusOK, keys, nil)
 	})
 
-	router.GET(`/api/session/applications/:name`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		key := params.ByName(`name`)
+	router.Get(`/api/session/applications/:name`, func(w http.ResponseWriter, req *http.Request) {
+		key := vestigo.Param(req, `key`)
 
 		if app, ok := self.Applications.Entries[key]; ok {
 			util.Respond(w, http.StatusOK, app, nil)
@@ -231,11 +236,11 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	router.GET(`/api/session/icons/list/:type`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/icons/list/:type`, func(w http.ResponseWriter, req *http.Request) {
 		var filterMinSize, filterMaxSize int
 
 		rv := make([]string, 0)
-		listType := params.ByName(`type`)
+		listType := vestigo.Param(req, `type`)
 
 		//  filters
 		filterThemes := strings.Split(req.URL.Query().Get(`themes`), `,`)
@@ -350,11 +355,12 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		util.Respond(w, http.StatusOK, rv, nil)
 	})
 
-	router.GET(`/api/session/icons/view/:name/size/:size`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	router.Get(`/api/session/icons/view/:name/size/:size`, func(w http.ResponseWriter, req *http.Request) {
 		var iconSize int
 
-		iconNames := strings.Split(params.ByName(`name`), `,`)
-		iconSizeS := params.ByName(`size`)
+		name := vestigo.Param(req, `name`)
+		iconNames := strings.Split(name, `,`)
+		iconSizeS := vestigo.Param(req, `size`)
 		themeName := req.URL.Query().Get(`theme`)
 
 		if themeName == `` {
@@ -408,11 +414,13 @@ func (self *SessionModule) LoadRoutes(router *httprouter.Router) error {
 		}
 	})
 
-	// router.GET(`/api/session/applications/find/:pattern`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+	// router.Get(`/api/session/applications/find/:pattern`, func(w http.ResponseWriter, req *http.Request) {
 	// })
 
-	router.PUT(`/api/session/applications/:name/launch`, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		if err := self.Applications.LaunchEntry(params.ByName(`name`)); err == nil {
+	router.Put(`/api/session/applications/:name/launch`, func(w http.ResponseWriter, req *http.Request) {
+		name := vestigo.Param(req, `name`)
+
+		if err := self.Applications.LaunchEntry(name); err == nil {
 			util.Respond(w, http.StatusAccepted, nil, nil)
 		} else {
 			util.Respond(w, http.StatusNotFound, nil, err)

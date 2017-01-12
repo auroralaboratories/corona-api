@@ -6,16 +6,19 @@ import (
 
 type BaseBackend struct {
 	types.IBackend `json:"-"`
-
-	Name       string            `json:"name"`
-	Outputs    []types.IOutput   `json:"outputs"`
-	Properties map[string]string `json:"properties"`
+	Name           string                 `json:"name"`
+	Outputs        []types.IOutput        `json:"outputs"`
+	Properties     map[string]interface{} `json:"properties"`
 }
 
 func (self *BaseBackend) Initialize() error {
-	self.Outputs = make([]types.IOutput, 0)
-	self.Properties = make(map[string]string)
+	self.Reset()
 	return nil
+}
+
+func (self *BaseBackend) Reset() {
+	self.Outputs = make([]types.IOutput, 0)
+	self.Properties = make(map[string]interface{})
 }
 
 func (self *BaseBackend) GetName() string {
@@ -26,7 +29,7 @@ func (self *BaseBackend) SetName(name string) {
 	self.Name = name
 }
 
-func (self *BaseBackend) GetProperty(key string, fallback string) string {
+func (self *BaseBackend) GetProperty(key string, fallback interface{}) interface{} {
 	if v, ok := self.Properties[key]; ok {
 		return v
 	} else {
@@ -34,7 +37,7 @@ func (self *BaseBackend) GetProperty(key string, fallback string) string {
 	}
 }
 
-func (self *BaseBackend) SetProperty(key string, value string) {
+func (self *BaseBackend) SetProperty(key string, value interface{}) {
 	self.Properties[key] = value
 }
 
@@ -48,11 +51,11 @@ func (self *BaseBackend) GetOutputByName(name string) (types.IOutput, bool) {
 	return nil, false
 }
 
-func (self *BaseBackend) GetOutputsByProperty(key string, value string) []types.IOutput {
+func (self *BaseBackend) GetOutputsByProperty(key string, value interface{}) []types.IOutput {
 	rv := make([]types.IOutput, 0)
 
 	for _, output := range self.Outputs {
-		if propValue := output.GetProperty(key, ``); propValue != `` && propValue == value {
+		if propValue := output.GetProperty(key, nil); propValue != `` && propValue == value {
 			rv = append(rv, output)
 		}
 	}

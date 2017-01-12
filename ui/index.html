@@ -1,0 +1,18 @@
+---
+page:
+    title: Desktop Manager
+bindings:
+- name: windows
+  resource: :/api/session/windows
+---
+
+<div class="col-xs-12">
+  <div class="list-group">
+    {{ range .bindings.windows.payload }}
+    <a onclick="corona.actionWindow({{ .id }}, 'raise'); corona.reload();" class="list-group-item {{ if .active }}active{{ else }}list-group-item-action{{ end }}">
+      <img src="{{ .icon }}?w=32&amp;h=32" alt="Icon for {{ .name }}">
+      {{ .name }}
+    </a>
+    {{ end }}
+  </div>
+</div>

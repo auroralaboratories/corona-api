@@ -12,18 +12,10 @@ import (
 
 type BusPlugin struct {
 	BasePlugin
-
-	//  Registered connections.
-	Connections map[*BusConnection]bool
-
-	//  Inbound messages from the connections.
-	Broadcast chan *BusMessage
-
-	//  Register requests from the connections.
-	Register chan *BusConnection
-
-	//  Unregister requests from connections.
-	Unregister chan *BusConnection
+	Connections map[*BusConnection]bool //  Registered connections.
+	Broadcast   chan *BusMessage        //  Inbound messages from the connections.
+	Register    chan *BusConnection     //  Register requests from the connections.
+	Unregister  chan *BusConnection     //  Unregister requests from connections.
 }
 
 const (
@@ -68,7 +60,7 @@ func (self *BusPlugin) GetConnection(id string) (connection *BusConnection, err 
 		return
 	}
 
-	for conn, _ := range self.Connections {
+	for conn := range self.Connections {
 		if conn.ID == id {
 			connection = conn
 			return
@@ -176,7 +168,7 @@ func (self *BusPlugin) Run() {
 				}
 			default:
 				//  send inbound message to all connections
-				for c, _ := range self.Connections {
+				for c := range self.Connections {
 					skip_send := false
 
 					//  ...but on only send to active connections

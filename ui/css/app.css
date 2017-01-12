@@ -1,0 +1,77 @@
+/*.content-container {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+*/
+.content-container > h1 {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+
+.navbar.site-main {
+    border-radius: 0;
+}
+
+.navbar.site-main {
+}
+
+.navbar.site-main .navbar-brand {
+    margin-right: 1.5em;
+}
+
+.bf-nav-tree > li {
+    margin-left: 0;
+}
+
+.bf-nav-tree .nav-link {
+    border-radius: 4px;
+    width: 100%;
+    padding: 4px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding-left: 0.5em;
+}
+
+.bf-nav-tree .nav-link:hover {
+    background-color: rgba(0,0,0,.075);
+}
+
+.bf-nav-tree .nav-link.active {
+    background-color: #0275d8;
+    color: white;
+    font-weight: bold;
+}
+
+.bf-nav-tree .bf-nav-tree-title {
+    font-weight: bold;
+}
+
+.bf-nav-tree > .nav-item:not(:first-child) {
+    margin-top: 1em;
+}
+
+.bf-nav-tree > li li {
+    margin-left: 1em;
+}
+
+
+.bf-queue-status-idle:before {
+    content: '\f1db'; /* circle-thin */
+}
+
+.bf-queue-status-waiting:before {
+    content: '\f017'; /* fa-clock-o */
+}
+
+.bf-queue-status-downloading:before {
+    content: '\f019'; /* fa-download */
+}
+
+.bf-queue-status-completed:before {
+    content: '\f00c'; /* fa=check */
+}
+
+.bf-queue-status-failed:before {
+    content: '\f071'; /* fa-exclamation-triangle */
+}

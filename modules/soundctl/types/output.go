@@ -4,8 +4,8 @@ type IOutput interface {
 	Initialize(IBackend) error
 	GetName() string
 	SetName(string)
-	GetProperty(string, string) string
-	SetProperty(string, string)
+	GetProperty(string, interface{}) interface{}
+	SetProperty(string, interface{})
 	Mute() error
 	Unmute() error
 	ToggleMute() error
